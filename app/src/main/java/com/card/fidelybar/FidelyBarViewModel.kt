@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.card.fidelybar.data.BarcodeFormatType
 import com.card.fidelybar.data.CardFileStore
+import com.card.fidelybar.data.LogoCache
 import com.card.fidelybar.data.StoreCatalog
 import com.card.fidelybar.data.StorePreset
 import com.card.fidelybar.data.UserCard
@@ -26,6 +27,15 @@ class FidelyBarViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         _cards.value = store.load()
+        prefetchLogos()
+    }
+
+    private fun prefetchLogos() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _cards.value.forEach { card ->
+                card.logoUrl?.let { LogoCache.ensure(getApplication(), it) }
+            }
+        }
     }
 
     fun getCard(id: String): UserCard? = _cards.value.firstOrNull { it.id == id }

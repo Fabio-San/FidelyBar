@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -92,7 +93,8 @@ fun LogoOrMonogram(
     containerColor: Color,
     contentColor: Color,
     modifier: Modifier = Modifier,
-    size: Int = 40
+    size: Int = 40,
+    logoKey: String? = null
 ) {
     Box(
         modifier = modifier
@@ -107,9 +109,23 @@ fun LogoOrMonogram(
             fontWeight = FontWeight.Bold,
             fontSize = (size * 0.42f).sp
         )
-        if (!logoUrl.isNullOrBlank()) {
+        val context = LocalContext.current
+        val resId = remember(logoKey) {
+            if (logoKey == null) 0
+            else context.resources.getIdentifier("logo_$logoKey", "drawable", context.packageName)
+        }
+        val cachedFile = remember(logoUrl) {
+            logoUrl?.let { com.card.fidelybar.data.LogoCache.fileFor(context, it) }
+        }
+        val model: Any? = when {
+            resId != 0 -> resId
+            cachedFile != null -> cachedFile
+            logoUrl != null -> logoUrl
+            else -> null
+        }
+        if (model != null) {
             AsyncImage(
-                model = logoUrl,
+                model = model,
                 contentDescription = null,
                 contentScale = androidx.compose.ui.layout.ContentScale.Fit,
                 modifier = Modifier
@@ -195,7 +211,8 @@ fun CardVisual(
                         logoUrl = card.logoUrl,
                         containerColor = contentColor.copy(alpha = 0.16f),
                         contentColor = contentColor,
-                        size = if (compact) 34 else 42
+                        size = if (compact) 34 else 42,
+                        logoKey = card.presetId
                     )
                     if (onToggleFavorite != null) {
                         FavoriteToggle(

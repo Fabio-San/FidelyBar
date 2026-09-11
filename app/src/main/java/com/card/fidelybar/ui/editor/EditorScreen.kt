@@ -281,6 +281,7 @@ fun EditorScreen(
                         subtitle = format.label,
                         primaryHex = primaryHex,
                         isCustom = isCustom,
+                        storeId = if (isCustom) null else presetId,
                         onChange = { storeChosen = false }
                     )
                 }
@@ -319,6 +320,7 @@ fun EditorScreen(
                                 monogram = preset.monogram,
                                 primaryHex = preset.primaryColorHex,
                                 selected = false,
+                                logoKey = preset.id,
                                 onClick = { selectPreset(preset) }
                             )
                         }
@@ -560,6 +562,7 @@ private fun SelectedStoreBar(
     subtitle: String,
     primaryHex: String,
     isCustom: Boolean,
+    storeId: String?,
     onChange: () -> Unit
 ) {
     val color = Color(android.graphics.Color.parseColor(primaryHex))
@@ -583,7 +586,8 @@ private fun SelectedStoreBar(
                     logoUrl = logoUrl,
                     containerColor = if (isCustom) MaterialTheme.colorScheme.primary else color,
                     contentColor = Color.White,
-                    size = 34
+                    size = 34,
+                    logoKey = storeId
                 )
                 Column {
                     Text(name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -650,6 +654,7 @@ private fun StoreChip(
     monogram: Char,
     primaryHex: String,
     selected: Boolean,
+    logoKey: String? = null,
     onClick: () -> Unit
 ) {
     val color = Color(android.graphics.Color.parseColor(primaryHex))
@@ -670,7 +675,8 @@ private fun StoreChip(
                 logoUrl = null,
                 containerColor = color.copy(alpha = 0.9f),
                 contentColor = Color.White,
-                size = 28
+                size = 28,
+                logoKey = logoKey
             )
             Text(label, style = MaterialTheme.typography.labelLarge)
         }
