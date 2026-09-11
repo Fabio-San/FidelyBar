@@ -85,7 +85,17 @@ object StoreCatalog {
         StorePreset("sole365", "Sole 365", BarcodeFormatType.EAN13, "#F5A800", "#C98800", 'S', hintDigits = 13),
         StorePreset("todis", "Todis", BarcodeFormatType.EAN13, "#F58220", "#C86613", 'T', hintDigits = 13),
         StorePreset("tuodi", "Tuodì", BarcodeFormatType.EAN13, "#008A3B", "#006C2D", 'T', hintDigits = 13),
-        StorePreset("cfadda", "CFadda", BarcodeFormatType.EAN13, "#FF6600", "#CC5200", 'C', hintDigits = 13)
+        StorePreset("cfadda", "CFadda", BarcodeFormatType.EAN13, "#FF6600", "#CC5200", 'C', hintDigits = 13),
+        StorePreset("globo", "Globo", BarcodeFormatType.EAN13, "#E4002B", "#A80020", 'G', hintDigits = 13),
+        StorePreset("prenatal", "Prénatal", BarcodeFormatType.EAN13, "#D81B60", "#AD1457", 'P', hintDigits = 13),
+        StorePreset("arcaplanet", "Arcaplanet", BarcodeFormatType.EAN13, "#00838F", "#006064", 'A', hintDigits = 13),
+        StorePreset("yamamay", "Yamamay", BarcodeFormatType.EAN13, "#E6007A", "#B8005F", 'Y', hintDigits = 13),
+        StorePreset("kiko", "Kiko Milano", BarcodeFormatType.EAN13, "#1A1A1A", "#000000", 'K', hintDigits = 13),
+        StorePreset("rinascente", "Rinascente", BarcodeFormatType.EAN13, "#111111", "#000000", 'R', hintDigits = 13),
+        StorePreset("coin", "Coin", BarcodeFormatType.EAN13, "#00356B", "#002450", 'C', hintDigits = 13),
+        StorePreset("maisonsdumonde", "Maisons du Monde", BarcodeFormatType.EAN13, "#004A9F", "#00306B", 'M', hintDigits = 13),
+        StorePreset("kik", "KiK", BarcodeFormatType.EAN13, "#FF6A00", "#CC5200", 'K', hintDigits = 13),
+        StorePreset("zarahome", "Zara Home", BarcodeFormatType.EAN13, "#111111", "#000000", 'Z', hintDigits = 13)
     )
 
     val byId: Map<String, StorePreset> = all.associateBy { it.id }
