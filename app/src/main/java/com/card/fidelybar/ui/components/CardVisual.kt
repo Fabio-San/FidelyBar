@@ -177,13 +177,34 @@ fun CardVisual(
     card: UserCard,
     modifier: Modifier = Modifier,
     compact: Boolean = false,
+    dense: Boolean = false,
     onClick: () -> Unit
 ) {
     val primary = rememberColor(card.primaryColorHex)
     val secondary = rememberColor(card.secondaryColorHex)
     val contentColor = foregroundFor(primary)
     val shape = RoundedCornerShape(if (compact) 16.dp else 20.dp)
-    val height = if (compact) 96.dp else 196.dp
+    val height = when {
+        dense -> 98.dp
+        compact -> 96.dp
+        else -> 196.dp
+    }
+    val logoSize = when {
+        dense -> 46
+        compact -> 34
+        else -> 42
+    }
+    val titleStyle = when {
+        dense -> MaterialTheme.typography.titleLarge
+        compact -> MaterialTheme.typography.titleSmall
+        else -> MaterialTheme.typography.titleMedium
+    }
+    val horizontal = compact || dense
+    val padding = when {
+        dense -> 14.dp
+        compact -> 12.dp
+        else -> 20.dp
+    }
 
     Surface(
         modifier = modifier
@@ -199,9 +220,9 @@ fun CardVisual(
                 .height(height)
                 .background(Brush.linearGradient(listOf(primary, secondary)))
                 .clickable(onClick = onClick)
-                .padding(if (compact) 12.dp else 20.dp)
+                .padding(padding)
         ) {
-            if (compact) {
+            if (horizontal) {
                 Row(
                     modifier = Modifier.fillMaxSize(),
                     verticalAlignment = Alignment.CenterVertically
@@ -211,14 +232,14 @@ fun CardVisual(
                         logoUrl = card.logoUrl,
                         containerColor = contentColor.copy(alpha = 0.16f),
                         contentColor = contentColor,
-                        size = 34,
+                        size = logoSize,
                         logoKey = card.presetId
                     )
-                    Spacer(Modifier.width(10.dp))
+                    Spacer(Modifier.width(if (dense) 16.dp else 10.dp))
                     Text(
                         text = card.title,
                         color = contentColor,
-                        style = MaterialTheme.typography.titleSmall,
+                        style = titleStyle,
                         fontWeight = FontWeight.Bold,
                         softWrap = true,
                         maxLines = 2,
@@ -228,25 +249,19 @@ fun CardVisual(
                 }
             } else {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        LogoOrMonogram(
-                            monogram = card.monogram,
-                            logoUrl = card.logoUrl,
-                            containerColor = contentColor.copy(alpha = 0.16f),
-                            contentColor = contentColor,
-                            size = 42,
-                            logoKey = card.presetId
-                        )
-                    }
+                    LogoOrMonogram(
+                        monogram = card.monogram,
+                        logoUrl = card.logoUrl,
+                        containerColor = contentColor.copy(alpha = 0.16f),
+                        contentColor = contentColor,
+                        size = logoSize,
+                        logoKey = card.presetId
+                    )
                     Spacer(Modifier.weight(1f))
                     Text(
                         text = card.title,
                         color = contentColor,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = titleStyle,
                         fontWeight = FontWeight.Bold,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis

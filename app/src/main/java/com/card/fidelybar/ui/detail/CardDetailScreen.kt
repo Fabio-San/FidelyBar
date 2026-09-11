@@ -140,6 +140,7 @@ fun CardDetailScreen(
                 CardVisual(
                     card = card,
                     onClick = {},
+                    dense = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(22.dp))
