@@ -24,14 +24,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,6 +65,26 @@ fun HomeScreen(
     val cards by viewModel.cards.collectAsStateWithLifecycle()
     val favorites = cards.filter { it.isFavorite }
     val others = cards.filterNot { it.isFavorite }
+    var showCredits by remember { mutableStateOf(false) }
+
+    if (showCredits) {
+        AlertDialog(
+            onDismissRequest = { showCredits = false },
+            title = { Text("Crediti") },
+            text = {
+                Column {
+                    Text("Loghi e dati delle catene: Wikipedia e Wikimedia Commons.")
+                    Spacer(Modifier.height(10.dp))
+                    Text("Concessi in licenza Creative Commons Attribution-ShareAlike 4.0 (CC BY-SA 4.0).")
+                    Spacer(Modifier.height(10.dp))
+                    Text("FidelyBar è un progetto personale. I marchi appartengono ai rispettivi detentori.")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showCredits = false }) { Text("Chiudi") }
+            }
+        )
+    }
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -97,7 +124,11 @@ fun HomeScreen(
                     contentPadding = PaddingValues(bottom = 110.dp)
                 ) {
                     item {
-                        HomeHeader(total = cards.size, modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp))
+                        HomeHeader(
+                            total = cards.size,
+                            onCredits = { showCredits = true },
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)
+                        )
                     }
 
                     if (favorites.isNotEmpty()) {
@@ -160,7 +191,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun HomeHeader(total: Int, modifier: Modifier = Modifier) {
+private fun HomeHeader(total: Int, onCredits: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -170,6 +201,13 @@ private fun HomeHeader(total: Int, modifier: Modifier = Modifier) {
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
             Spacer(Modifier.weight(1f))
+            IconButton(onClick = onCredits) {
+                Icon(
+                    imageVector = Icons.Outlined.Info,
+                    contentDescription = "Crediti",
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
             Box(
                 modifier = Modifier
                     .size(40.dp)
