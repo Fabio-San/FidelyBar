@@ -32,16 +32,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -58,7 +57,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -113,7 +111,6 @@ fun EditorScreen(
     var isCustomColor by rememberSaveable { mutableStateOf(true) }
     var query by rememberSaveable { mutableStateOf("") }
     var storeChosen by rememberSaveable { mutableStateOf(false) }
-    var entryMode by rememberSaveable { mutableStateOf(CodeEntryMode.TYPE) }
     var scanStatus by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(editingCard) {
@@ -169,7 +166,6 @@ fun EditorScreen(
                         number = content
                         format = result.format
                     }
-                    entryMode = CodeEntryMode.TYPE
                     scanStatus = null
                 } else {
                     scanStatus = "Codice non riconosciuto nella foto. Riprova o scrivilo a mano."
@@ -355,83 +351,10 @@ fun EditorScreen(
             }
 
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    EntryOption(
-                        title = "Scrivilo",
-                        subtitle = "digitando sulla tastiera",
-                        icon = Icons.Filled.Keyboard,
-                        selected = entryMode == CodeEntryMode.TYPE,
-                        onClick = { entryMode = CodeEntryMode.TYPE; scanStatus = null },
-                        modifier = Modifier.weight(1f)
-                    )
-                    EntryOption(
-                        title = "Da foto",
-                        subtitle = "fotocamera o galleria",
-                        icon = Icons.Filled.PhotoCamera,
-                        selected = entryMode == CodeEntryMode.SCAN,
-                        onClick = { entryMode = CodeEntryMode.SCAN; scanStatus = null },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-
-            if (entryMode == CodeEntryMode.SCAN) {
-                item {
-                    Spacer(Modifier.height(12.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        OutlinedButton(
-                            onClick = { cameraLauncher.launch(null) },
-                            shape = RoundedCornerShape(16.dp),
-                            modifier = Modifier.weight(1f).height(52.dp)
-                        ) {
-                            Icon(Icons.Filled.PhotoCamera, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("Scatta foto")
-                        }
-                        OutlinedButton(
-                            onClick = { galleryLauncher.launch("image/*") },
-                            shape = RoundedCornerShape(16.dp),
-                            modifier = Modifier.weight(1f).height(52.dp)
-                        ) {
-                            Icon(Icons.Filled.Image, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("Galleria")
-                        }
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    scanStatus?.let {
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (scanStatus?.contains("Lettura") == true) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(horizontal = 4.dp)
-                        )
-                    }
-                }
-            }
-
-            if (entryMode == CodeEntryMode.TYPE) {
-                item {
-                    Spacer(Modifier.height(14.dp))
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        BarcodeFormatType.entries.forEach { f ->
-                            val selected = format == f
-                            FilterChip(
-                                selected = selected,
-                                onClick = { format = f },
-                                label = { Text(f.label) },
-                                leadingIcon = if (selected) {
-                                    { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
-                                } else null
-                            )
-                        }
-                    }
-                }
-                item {
-                    Spacer(Modifier.height(12.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     OutlinedTextField(
                         value = number,
                         onValueChange = { raw ->
@@ -456,7 +379,38 @@ fun EditorScreen(
                             keyboardType = if (format == BarcodeFormatType.QR_CODE) KeyboardType.Text else KeyboardType.NumberPassword
                         ),
                         shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.weight(1f)
+                    )
+                    FilledTonalIconButton(onClick = { cameraLauncher.launch(null) }) {
+                        Icon(Icons.Filled.PhotoCamera, contentDescription = "Scatta foto")
+                    }
+                    FilledTonalIconButton(onClick = { galleryLauncher.launch("image/*") }) {
+                        Icon(Icons.Filled.FolderOpen, contentDescription = "Galleria")
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    BarcodeFormatType.entries.forEach { f ->
+                        val selected = format == f
+                        FilterChip(
+                            selected = selected,
+                            onClick = { format = f },
+                            label = { Text(f.label) },
+                            leadingIcon = if (selected) {
+                                { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                            } else null
+                        )
+                    }
+                }
+                scanStatus?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (scanStatus?.contains("Lettura") == true) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp)
                     )
                 }
             }
@@ -477,7 +431,7 @@ fun EditorScreen(
                 )
             }
 
-            if (isCustom && entryMode == CodeEntryMode.TYPE) {
+            if (isCustom) {
                 item {
                     Text(
                         "Colore",
@@ -524,11 +478,7 @@ fun EditorScreen(
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
-                                text = if (entryMode == CodeEntryMode.SCAN) {
-                                    "Seleziona foto o galleria per leggere il codice"
-                                } else {
-                                    "Inserisci o scansiona il numero per vedere il codice"
-                                },
+                                text = "Inserisci o scansiona il numero per vedere il codice",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -613,50 +563,6 @@ private fun SelectedStoreBar(
             Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(4.dp))
             Text("Cambia")
-        }
-    }
-}
-
-@Composable
-private fun EntryOption(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(18.dp),
-        color = if (selected) MaterialTheme.colorScheme.primaryContainer
-        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
-        border = if (selected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
-        modifier = modifier
-    ) {
-        Row(
-            modifier = Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(26.dp)
-            )
-            Column {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
         }
     }
 }
