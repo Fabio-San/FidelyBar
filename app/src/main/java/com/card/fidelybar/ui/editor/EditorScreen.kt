@@ -364,15 +364,6 @@ fun EditorScreen(
                             }
                         },
                         label = { Text("Numero della carta") },
-                        supportingText = {
-                            Text(
-                                validationError ?: when (format) {
-                                    BarcodeFormatType.EAN13, BarcodeFormatType.UPC_A -> "12 o 13 cifre"
-                                    BarcodeFormatType.EAN8 -> "7 o 8 cifre"
-                                    else -> "Codice del programma fedeltà"
-                                }
-                            )
-                        },
                         isError = validationError != null,
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
@@ -388,7 +379,19 @@ fun EditorScreen(
                         Icon(Icons.Filled.FolderOpen, contentDescription = "Galleria")
                     }
                 }
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = validationError ?: when (format) {
+                        BarcodeFormatType.EAN13, BarcodeFormatType.UPC_A -> "12 o 13 cifre"
+                        BarcodeFormatType.EAN8 -> "7 o 8 cifre"
+                        else -> "Codice del programma fedeltà"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (validationError != null) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+                Spacer(Modifier.height(8.dp))
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -406,11 +409,12 @@ fun EditorScreen(
                     }
                 }
                 scanStatus?.let {
+                    Spacer(Modifier.height(6.dp))
                     Text(
                         text = it,
                         style = MaterialTheme.typography.bodySmall,
                         color = if (scanStatus?.contains("Lettura") == true) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp)
+                        modifier = Modifier.padding(horizontal = 4.dp)
                     )
                 }
             }

@@ -49,7 +49,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -61,7 +60,6 @@ import com.card.fidelybar.data.UserCard
 import com.card.fidelybar.ui.components.CardVisual
 import com.card.fidelybar.ui.components.LogoOrMonogram
 import com.card.fidelybar.ui.theme.Gold
-import kotlin.math.abs
 
 @Composable
 fun HomeScreen(
@@ -350,14 +348,8 @@ private fun FavoritesPager(
             .fillMaxWidth()
             .padding(top = 16.dp)
     ) { page ->
-        val offset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
-        val scale = (1f - 0.10f * abs(offset)).coerceIn(0.82f, 1f)
         CardVisual(
             card = cards[page],
-            modifier = Modifier.graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            },
             onClick = { onOpen(cards[page].id) }
         )
     }
