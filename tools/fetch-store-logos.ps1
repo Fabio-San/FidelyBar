@@ -8,7 +8,9 @@
 # Licenza dei file immagine: vedere la pagina file su Wikimedia Commons.
 # Attribuzione in-app richiesta (schermata Credit).
 #
-# Uso:  pwsh tools/fetch-store-logos.ps1
+# Uso:  pwsh tools/fetch-store-logos.ps1 [-Force]
+
+param([switch]$Force)
 
 $ErrorActionPreference = 'Stop'
 
@@ -101,8 +103,9 @@ Write-Host "=== Nella lista senza logo ($($unmatched.Count)) ==="
 $unmatched | ForEach-Object { Write-Host "  $_" }
 
 # --- 3. Download thumbnail 512px (fallback 320, 120) -----------------------
+# Usa: -Force per riscaricare anche i loghi già presenti.
 Write-Host ""
-$ok = 0; $fail = 0
+$ok = 0; $fail = 0; $skip = 0
 foreach ($imgUrl in $found.Keys) {
     $parts = $found[$imgUrl].Split('|')
     $id = $parts[0]; $name = $parts[1]
@@ -112,6 +115,12 @@ foreach ($imgUrl in $found.Keys) {
     $ext = ($fileBase -split '\.')[-1] -replace '[^a-z0-9]', ''
     if ($ext -notin @('png','jpg','jpeg','gif','webp','svg')) { $ext = 'png' }
     $target = Join-Path $outputDir "logo_$id.$ext"
+
+    if ((Test-Path -LiteralPath $target) -and -not $Force) {
+        Write-Host "  skip $name (già presente)"
+        $skip++
+        continue
+    }
 
     $url512 = [regex]::Replace($imgUrl, '/\d+px-(?=[^/]+$)', '/512px-')
     $url320 = [regex]::Replace($imgUrl, '/\d+px-(?=[^/]+$)', '/320px-')
@@ -135,8 +144,9 @@ foreach ($imgUrl in $found.Keys) {
         Write-Host "  FAIL $name (download non riuscito)"
         $fail++
     }
+    Start-Sleep -Milliseconds 700
 }
 
 Write-Host ""
-Write-Host "Fatto: $ok loghi scaricati, $fail errori."
-if (-not $ok) { exit 1 }
+Write-Host "Fatto: $ok loghi scaricati, $skip già presenti, $fail errori."
+if ($fail -gt 0) { exit 1 }
