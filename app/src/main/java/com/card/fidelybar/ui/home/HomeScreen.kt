@@ -22,7 +22,9 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
@@ -32,12 +34,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,11 +52,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.card.fidelybar.FidelyBarViewModel
 import com.card.fidelybar.data.UserCard
 import com.card.fidelybar.ui.components.CardVisual
+import com.card.fidelybar.ui.components.LogoOrMonogram
 import com.card.fidelybar.ui.theme.Gold
 import kotlin.math.abs
 
@@ -66,6 +72,7 @@ fun HomeScreen(
     val favorites = cards.filter { it.isFavorite }
     val others = cards.filterNot { it.isFavorite }
     var showCredits by remember { mutableStateOf(false) }
+    var isListView by rememberSaveable { mutableStateOf(false) }
 
     if (showCredits) {
         AlertDialog(
@@ -148,39 +155,65 @@ fun HomeScreen(
 
                         if (others.isNotEmpty()) {
                             item {
-                                SectionTitle(
-                                    "Tutte le carte",
-                                    modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 28.dp, bottom = 10.dp)
+                                SectionHeader(
+                                    title = "Tutte le carte",
+                                    isListView = isListView,
+                                    onToggleView = { isListView = !isListView },
+                                    modifier = Modifier.padding(start = 20.dp, end = 8.dp, top = 28.dp, bottom = 4.dp)
                                 )
                             }
                         }
                     } else {
                         item {
-                            SectionTitle(
-                                "Le tue carte",
-                                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 6.dp, bottom = 10.dp)
+                            SectionHeader(
+                                title = "Le tue carte",
+                                isListView = isListView,
+                                onToggleView = { isListView = !isListView },
+                                modifier = Modifier.padding(start = 20.dp, end = 8.dp, top = 6.dp, bottom = 4.dp)
                             )
                         }
                     }
 
-                    items(others.chunked(2), key = { it.joinToString("") { c -> c.id } }) { row ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 6.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            row.forEach { card ->
-                                CardVisual(
-                                    card = card,
-                                    modifier = Modifier.weight(1f),
-                                    compact = true,
-                                    onClick = { onOpenCard(card.id) },
-                                    onToggleFavorite = { fav -> viewModel.setFavorite(card.id, fav) }
-                                )
+                    if (isListView) {
+                        items(others.chunked(2), key = { it.joinToString("") { c -> c.id } }) { row ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp, vertical = 5.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                row.forEach { card ->
+                                    CardListItem(
+                                        card = card,
+                                        modifier = Modifier.weight(1f),
+                                        onClick = { onOpenCard(card.id) }
+                                    )
+                                }
+                                if (row.size == 1) {
+                                    Spacer(Modifier.weight(1f))
+                                }
                             }
-                            if (row.size == 1) {
-                                Spacer(Modifier.weight(1f))
+                        }
+                    } else {
+                        items(others.chunked(2), key = { it.joinToString("") { c -> c.id } }) { row ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                row.forEach { card ->
+                                    CardVisual(
+                                        card = card,
+                                        modifier = Modifier.weight(1f),
+                                        compact = true,
+                                        onClick = { onOpenCard(card.id) },
+                                        onToggleFavorite = { fav -> viewModel.setFavorite(card.id, fav) }
+                                    )
+                                }
+                                if (row.size == 1) {
+                                    Spacer(Modifier.weight(1f))
+                                }
                             }
                         }
                     }
@@ -232,14 +265,75 @@ private fun HomeHeader(total: Int, onCredits: () -> Unit, modifier: Modifier = M
 }
 
 @Composable
-private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.headlineSmall,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onBackground,
+private fun SectionHeader(
+    title: String,
+    isListView: Boolean,
+    onToggleView: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.weight(1f)
+        )
+        IconButton(onClick = onToggleView, modifier = Modifier.size(38.dp)) {
+            Icon(
+                imageVector = if (isListView) Icons.Filled.GridView else Icons.AutoMirrored.Filled.List,
+                contentDescription = if (isListView) "Passa alla griglia" else "Passa all'elenco",
+                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f),
+                modifier = Modifier.size(22.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun CardListItem(
+    card: UserCard,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val accent = remember(card.primaryColorHex) {
+        Color(android.graphics.Color.parseColor(card.primaryColorHex))
+    }
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 1.dp,
+        shadowElevation = 1.dp,
         modifier = modifier
-    )
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            LogoOrMonogram(
+                monogram = card.monogram,
+                logoUrl = card.logoUrl,
+                containerColor = accent,
+                contentColor = Color.White,
+                size = 40,
+                logoKey = card.presetId
+            )
+            Text(
+                text = card.title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
 }
 
 @Composable

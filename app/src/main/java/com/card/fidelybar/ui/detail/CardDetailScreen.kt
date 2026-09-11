@@ -107,7 +107,7 @@ fun CardDetailScreen(
                 }
                 Text(
                     text = card.title,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     modifier = Modifier.weight(1f)
@@ -188,11 +188,6 @@ private fun NumberFooter(card: UserCard) {
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = card.format.label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
