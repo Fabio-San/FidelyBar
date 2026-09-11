@@ -184,13 +184,12 @@ fun CardVisual(
     val secondary = rememberColor(card.secondaryColorHex)
     val contentColor = foregroundFor(primary)
     val shape = RoundedCornerShape(if (compact) 16.dp else 20.dp)
-    val isFull = !compact
-    val contentHeight = if (isFull) Modifier.height(196.dp) else Modifier
+    val height = if (compact) 128.dp else 196.dp
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .then(contentHeight)
+            .height(height)
             .clip(shape),
         color = Color.Transparent,
         shadowElevation = if (compact) 2.dp else 10.dp
@@ -198,7 +197,7 @@ fun CardVisual(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .then(contentHeight)
+                .height(height)
                 .background(Brush.linearGradient(listOf(primary, secondary)))
                 .clickable(onClick = onClick)
                 .padding(if (compact) 12.dp else 20.dp)
@@ -213,16 +212,18 @@ fun CardVisual(
                         logoUrl = card.logoUrl,
                         containerColor = contentColor.copy(alpha = 0.16f),
                         contentColor = contentColor,
-                        size = 34,
+                        size = 40,
                         logoKey = card.presetId
                     )
                     Spacer(Modifier.width(12.dp))
                     Text(
                         text = card.title,
                         color = contentColor,
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         softWrap = true,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
                     if (onToggleFavorite != null) {
