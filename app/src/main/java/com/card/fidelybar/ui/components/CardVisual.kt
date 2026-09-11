@@ -237,16 +237,24 @@ fun CardVisual(
                             logoKey = card.presetId
                         )
                         Spacer(Modifier.width(10.dp))
-                        Text(
-                            text = card.title,
-                            color = contentColor,
-                            style = titleStyle,
-                            fontWeight = FontWeight.Bold,
-                            softWrap = true,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = card.title,
+                                color = contentColor,
+                                style = titleStyle,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                softWrap = true,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
                 dense -> {

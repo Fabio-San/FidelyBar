@@ -16,10 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PageSize
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -49,7 +45,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -59,7 +54,6 @@ import com.card.fidelybar.FidelyBarViewModel
 import com.card.fidelybar.data.UserCard
 import com.card.fidelybar.ui.components.CardVisual
 import com.card.fidelybar.ui.components.LogoOrMonogram
-import com.card.fidelybar.ui.theme.Gold
 
 @Composable
 fun HomeScreen(
@@ -69,8 +63,9 @@ fun HomeScreen(
     onOpenSettings: () -> Unit
 ) {
     val cards by viewModel.cards.collectAsStateWithLifecycle()
-    val favorites = cards.filter { it.isFavorite }
-    val others = cards.filterNot { it.isFavorite }
+    val orderedCards = remember(cards) {
+        cards.sortedWith(compareBy { !it.isFavorite })
+    }
     var showCredits by remember { mutableStateOf(false) }
     var isListView by rememberSaveable { mutableStateOf(false) }
 
@@ -138,43 +133,17 @@ fun HomeScreen(
                         )
                     }
 
-                    if (favorites.isNotEmpty()) {
-                        item {
-                            FavoritesPager(
-                                cards = favorites,
-                                onOpen = onOpenCard
-                            )
-                        }
-                        item {
-                            DotsIndicator(
-                                pageCount = favorites.size,
-                                modifier = Modifier.padding(top = 14.dp)
-                            )
-                        }
-
-                        if (others.isNotEmpty()) {
-                            item {
-                                SectionHeader(
-                                    title = "Tutte le carte",
-                                    isListView = isListView,
-                                    onToggleView = { isListView = !isListView },
-                                    modifier = Modifier.padding(start = 20.dp, end = 8.dp, top = 28.dp, bottom = 4.dp)
-                                )
-                            }
-                        }
-                    } else {
-                        item {
-                            SectionHeader(
-                                title = "Le tue carte",
-                                isListView = isListView,
-                                onToggleView = { isListView = !isListView },
-                                modifier = Modifier.padding(start = 20.dp, end = 8.dp, top = 6.dp, bottom = 4.dp)
-                            )
-                        }
+                    item {
+                        SectionHeader(
+                            title = "Le tue carte",
+                            isListView = isListView,
+                            onToggleView = { isListView = !isListView },
+                            modifier = Modifier.padding(start = 20.dp, end = 8.dp, top = 6.dp, bottom = 4.dp)
+                        )
                     }
 
                     if (isListView) {
-                        items(others.chunked(2), key = { it.joinToString("") { c -> c.id } }) { row ->
+                        items(orderedCards.chunked(2), key = { it.joinToString("") { c -> c.id } }) { row ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -194,7 +163,7 @@ fun HomeScreen(
                             }
                         }
                     } else {
-                        items(others.chunked(2), key = { it.joinToString("") { c -> c.id } }) { row ->
+                        items(orderedCards.chunked(2), key = { it.joinToString("") { c -> c.id } }) { row ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -323,53 +292,6 @@ private fun CardListItem(
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun FavoritesPager(
-    cards: List<UserCard>,
-    onOpen: (String) -> Unit
-) {
-    val pagerState = rememberPagerState(pageCount = { cards.size })
-    val pageWidthFraction = 0.82f
-    val screenWidthDp = LocalConfiguration.current.screenWidthDp
-    val pageWidth = (screenWidthDp * pageWidthFraction).dp
-
-    HorizontalPager(
-        state = pagerState,
-        pageSize = PageSize.Fixed(pageWidth),
-        contentPadding = PaddingValues(horizontal = 30.dp),
-        pageSpacing = 14.dp,
-        beyondViewportPageCount = 1,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp)
-    ) { page ->
-        CardVisual(
-            card = cards[page],
-            onClick = { onOpen(cards[page].id) }
-        )
-    }
-}
-
-@Composable
-private fun DotsIndicator(pageCount: Int, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
-    ) {
-        repeat(pageCount.coerceAtMost(9)) { index ->
-            val active = index == 0
-            val color = if (active) Gold else MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
-            Box(
-                modifier = Modifier
-                    .padding(horizontal = 3.dp)
-                    .size(width = if (active) 18.dp else 7.dp, height = 7.dp)
-                    .clip(CircleShape)
-                    .background(color)
             )
         }
     }
