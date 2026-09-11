@@ -140,7 +140,6 @@ fun CardDetailScreen(
                 CardVisual(
                     card = card,
                     onClick = {},
-                    onToggleFavorite = { fav -> viewModel.setFavorite(card.id, fav) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(22.dp))

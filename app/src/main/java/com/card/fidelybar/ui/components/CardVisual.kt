@@ -177,14 +177,13 @@ fun CardVisual(
     card: UserCard,
     modifier: Modifier = Modifier,
     compact: Boolean = false,
-    onClick: () -> Unit,
-    onToggleFavorite: ((Boolean) -> Unit)? = null
+    onClick: () -> Unit
 ) {
     val primary = rememberColor(card.primaryColorHex)
     val secondary = rememberColor(card.secondaryColorHex)
     val contentColor = foregroundFor(primary)
     val shape = RoundedCornerShape(if (compact) 16.dp else 20.dp)
-    val height = if (compact) 128.dp else 196.dp
+    val height = if (compact) 96.dp else 196.dp
 
     Surface(
         modifier = modifier
@@ -207,24 +206,25 @@ fun CardVisual(
                     modifier = Modifier.fillMaxSize(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    LogoOrMonogram(
+                        monogram = card.monogram,
+                        logoUrl = card.logoUrl,
+                        containerColor = contentColor.copy(alpha = 0.16f),
+                        contentColor = contentColor,
+                        size = 34,
+                        logoKey = card.presetId
+                    )
+                    Spacer(Modifier.width(10.dp))
                     Text(
                         text = card.title,
                         color = contentColor,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         softWrap = true,
-                        maxLines = 3,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
-                    if (onToggleFavorite != null) {
-                        Spacer(Modifier.width(8.dp))
-                        FavoriteToggle(
-                            isFavorite = card.isFavorite,
-                            onToggle = { onToggleFavorite(!card.isFavorite) },
-                            tint = if (card.isFavorite) Gold else contentColor
-                        )
-                    }
                 }
             } else {
                 Column(modifier = Modifier.fillMaxWidth()) {
@@ -241,13 +241,6 @@ fun CardVisual(
                             size = 42,
                             logoKey = card.presetId
                         )
-                        if (onToggleFavorite != null) {
-                            FavoriteToggle(
-                                isFavorite = card.isFavorite,
-                                onToggle = { onToggleFavorite(!card.isFavorite) },
-                                tint = if (card.isFavorite) Gold else contentColor
-                            )
-                        }
                     }
                     Spacer(Modifier.weight(1f))
                     Text(

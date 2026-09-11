@@ -144,8 +144,7 @@ fun HomeScreen(
                         item {
                             FavoritesPager(
                                 cards = favorites,
-                                onOpen = onOpenCard,
-                                onToggleFavorite = viewModel::toggleFavorite
+                                onOpen = onOpenCard
                             )
                         }
                         item {
@@ -209,8 +208,7 @@ fun HomeScreen(
                                         card = card,
                                         modifier = Modifier.weight(1f),
                                         compact = true,
-                                        onClick = { onOpenCard(card.id) },
-                                        onToggleFavorite = { fav -> viewModel.setFavorite(card.id, fav) }
+                                        onClick = { onOpenCard(card.id) }
                                     )
                                 }
                                 if (row.size == 1) {
@@ -335,8 +333,7 @@ private fun CardListItem(
 @Composable
 private fun FavoritesPager(
     cards: List<UserCard>,
-    onOpen: (String) -> Unit,
-    onToggleFavorite: (String) -> Unit
+    onOpen: (String) -> Unit
 ) {
     val pagerState = rememberPagerState(pageCount = { cards.size })
     val pageWidthFraction = 0.82f
@@ -361,8 +358,7 @@ private fun FavoritesPager(
                 scaleX = scale
                 scaleY = scale
             },
-            onClick = { onOpen(cards[page].id) },
-            onToggleFavorite = { onToggleFavorite(cards[page].id) }
+            onClick = { onOpen(cards[page].id) }
         )
     }
 }
