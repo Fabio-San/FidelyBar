@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -199,7 +200,6 @@ fun CardVisual(
         compact -> MaterialTheme.typography.titleSmall
         else -> MaterialTheme.typography.titleMedium
     }
-    val horizontal = compact || dense
     val padding = when {
         dense -> 14.dp
         compact -> 12.dp
@@ -222,50 +222,81 @@ fun CardVisual(
                 .clickable(onClick = onClick)
                 .padding(padding)
         ) {
-            if (horizontal) {
-                Row(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    LogoOrMonogram(
-                        monogram = card.monogram,
-                        logoUrl = card.logoUrl,
-                        containerColor = contentColor.copy(alpha = 0.16f),
-                        contentColor = contentColor,
-                        size = logoSize,
-                        logoKey = card.presetId
-                    )
-                    Spacer(Modifier.width(if (dense) 16.dp else 10.dp))
-                    Text(
-                        text = card.title,
-                        color = contentColor,
-                        style = titleStyle,
-                        fontWeight = FontWeight.Bold,
-                        softWrap = true,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
+            when {
+                compact -> {
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        LogoOrMonogram(
+                            monogram = card.monogram,
+                            logoUrl = card.logoUrl,
+                            containerColor = contentColor.copy(alpha = 0.16f),
+                            contentColor = contentColor,
+                            size = logoSize,
+                            logoKey = card.presetId
+                        )
+                        Spacer(Modifier.width(10.dp))
+                        Text(
+                            text = card.title,
+                            color = contentColor,
+                            style = titleStyle,
+                            fontWeight = FontWeight.Bold,
+                            softWrap = true,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
-            } else {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    LogoOrMonogram(
-                        monogram = card.monogram,
-                        logoUrl = card.logoUrl,
-                        containerColor = contentColor.copy(alpha = 0.16f),
-                        contentColor = contentColor,
-                        size = logoSize,
-                        logoKey = card.presetId
-                    )
-                    Spacer(Modifier.weight(1f))
-                    Text(
-                        text = card.title,
-                        color = contentColor,
-                        style = titleStyle,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                dense -> {
+                    Box(Modifier.fillMaxSize()) {
+                        Box(modifier = Modifier.align(Alignment.CenterStart)) {
+                            LogoOrMonogram(
+                                monogram = card.monogram,
+                                logoUrl = card.logoUrl,
+                                containerColor = contentColor.copy(alpha = 0.16f),
+                                contentColor = contentColor,
+                                size = logoSize,
+                                logoKey = card.presetId
+                            )
+                        }
+                        Text(
+                            text = card.title,
+                            color = contentColor,
+                            style = titleStyle,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            softWrap = true,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .fillMaxWidth()
+                                .padding(horizontal = 60.dp)
+                        )
+                    }
+                }
+                else -> {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        LogoOrMonogram(
+                            monogram = card.monogram,
+                            logoUrl = card.logoUrl,
+                            containerColor = contentColor.copy(alpha = 0.16f),
+                            contentColor = contentColor,
+                            size = logoSize,
+                            logoKey = card.presetId
+                        )
+                        Spacer(Modifier.weight(1f))
+                        Text(
+                            text = card.title,
+                            color = contentColor,
+                            style = titleStyle,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
         }

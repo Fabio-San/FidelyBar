@@ -159,8 +159,16 @@ fun EditorScreen(
             val result = BarcodeEngine.decode(bitmap)
             withContext(Dispatchers.Main) {
                 if (result != null) {
-                    number = result.content.trim()
-                    format = result.format
+                    val content = result.content.trim()
+                    if (result.format == BarcodeFormatType.UPC_A) {
+                        // Un EAN-13 che inizia con 0 è rilevato da ZXing come UPC-A:
+                        // lo riportiamo a EAN-13 ripremettendo lo 0.
+                        number = "0$content"
+                        format = BarcodeFormatType.EAN13
+                    } else {
+                        number = content
+                        format = result.format
+                    }
                     entryMode = CodeEntryMode.TYPE
                     scanStatus = null
                 } else {
