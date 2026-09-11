@@ -182,7 +182,7 @@ fun CardVisual(
     val secondary = rememberColor(card.secondaryColorHex)
     val contentColor = foregroundFor(primary)
     val shape = RoundedCornerShape(if (compact) 16.dp else 20.dp)
-    val height = if (compact) 158.dp else 216.dp
+    val height = if (compact) 116.dp else 216.dp
 
     Surface(
         modifier = modifier
@@ -228,7 +228,7 @@ fun CardVisual(
                     color = contentColor,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    maxLines = 2,
+                    maxLines = if (compact) 1 else 2,
                     overflow = TextOverflow.Ellipsis
                 )
             }
