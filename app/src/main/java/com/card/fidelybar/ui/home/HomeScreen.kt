@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
@@ -66,7 +67,8 @@ import kotlin.math.abs
 fun HomeScreen(
     viewModel: FidelyBarViewModel,
     onOpenCard: (String) -> Unit,
-    onAddCard: () -> Unit
+    onAddCard: () -> Unit,
+    onOpenSettings: () -> Unit
 ) {
     val cards by viewModel.cards.collectAsStateWithLifecycle()
     val favorites = cards.filter { it.isFavorite }
@@ -132,8 +134,8 @@ fun HomeScreen(
                 ) {
                     item {
                         HomeHeader(
-                            total = cards.size,
                             onCredits = { showCredits = true },
+                            onOpenSettings = onOpenSettings,
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)
                         )
                     }
@@ -224,7 +226,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun HomeHeader(total: Int, onCredits: () -> Unit, modifier: Modifier = Modifier) {
+private fun HomeHeader(onCredits: () -> Unit, onOpenSettings: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -241,17 +243,11 @@ private fun HomeHeader(total: Int, onCredits: () -> Unit, modifier: Modifier = M
                     tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                 )
             }
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "$total",
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.Bold
+            IconButton(onClick = onOpenSettings) {
+                Icon(
+                    imageVector = Icons.Filled.Settings,
+                    contentDescription = "Impostazioni",
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                 )
             }
         }

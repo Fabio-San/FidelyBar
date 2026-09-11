@@ -10,10 +10,12 @@ import com.card.fidelybar.FidelyBarViewModel
 import com.card.fidelybar.ui.detail.CardDetailScreen
 import com.card.fidelybar.ui.editor.EditorScreen
 import com.card.fidelybar.ui.home.HomeScreen
+import com.card.fidelybar.ui.settings.SettingsScreen
 
 object Routes {
     const val HOME = "home"
     const val EDITOR = "editor"
+    const val SETTINGS = "settings"
     const val CARD = "card/{cardId}"
     fun editor(cardId: String? = null) = if (cardId == null) EDITOR else "editor?cardId=$cardId"
     fun card(cardId: String) = "card/$cardId"
@@ -31,7 +33,13 @@ fun FidelyBarApp(viewModel: FidelyBarViewModel) {
             HomeScreen(
                 viewModel = viewModel,
                 onOpenCard = { id -> navController.navigate(Routes.card(id)) },
-                onAddCard = { navController.navigate(Routes.editor()) }
+                onAddCard = { navController.navigate(Routes.editor()) },
+                onOpenSettings = { navController.navigate(Routes.SETTINGS) }
+            )
+        }
+        composable(Routes.SETTINGS) {
+            SettingsScreen(
+                onBack = { navController.popBackStack() }
             )
         }
         composable(

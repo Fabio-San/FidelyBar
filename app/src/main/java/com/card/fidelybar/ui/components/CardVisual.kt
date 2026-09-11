@@ -9,10 +9,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -182,12 +184,13 @@ fun CardVisual(
     val secondary = rememberColor(card.secondaryColorHex)
     val contentColor = foregroundFor(primary)
     val shape = RoundedCornerShape(if (compact) 16.dp else 20.dp)
-    val height = if (compact) 116.dp else 216.dp
+    val isFull = !compact
+    val contentHeight = if (isFull) Modifier.height(196.dp) else Modifier
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .height(height)
+            .then(contentHeight)
             .clip(shape),
         color = Color.Transparent,
         shadowElevation = if (compact) 2.dp else 10.dp
@@ -195,15 +198,14 @@ fun CardVisual(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(height)
+                .then(contentHeight)
                 .background(Brush.linearGradient(listOf(primary, secondary)))
                 .clickable(onClick = onClick)
-                .padding(if (compact) 16.dp else 20.dp)
+                .padding(if (compact) 12.dp else 20.dp)
         ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
+            if (compact) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxSize(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     LogoOrMonogram(
@@ -211,10 +213,20 @@ fun CardVisual(
                         logoUrl = card.logoUrl,
                         containerColor = contentColor.copy(alpha = 0.16f),
                         contentColor = contentColor,
-                        size = if (compact) 34 else 42,
+                        size = 34,
                         logoKey = card.presetId
                     )
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        text = card.title,
+                        color = contentColor,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        softWrap = true,
+                        modifier = Modifier.weight(1f)
+                    )
                     if (onToggleFavorite != null) {
+                        Spacer(Modifier.width(6.dp))
                         FavoriteToggle(
                             isFavorite = card.isFavorite,
                             onToggle = { onToggleFavorite(!card.isFavorite) },
@@ -222,15 +234,39 @@ fun CardVisual(
                         )
                     }
                 }
-                Spacer(Modifier.weight(1f))
-                Text(
-                    text = card.title,
-                    color = contentColor,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = if (compact) 1 else 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+            } else {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        LogoOrMonogram(
+                            monogram = card.monogram,
+                            logoUrl = card.logoUrl,
+                            containerColor = contentColor.copy(alpha = 0.16f),
+                            contentColor = contentColor,
+                            size = 42,
+                            logoKey = card.presetId
+                        )
+                        if (onToggleFavorite != null) {
+                            FavoriteToggle(
+                                isFavorite = card.isFavorite,
+                                onToggle = { onToggleFavorite(!card.isFavorite) },
+                                tint = if (card.isFavorite) Gold else contentColor
+                            )
+                        }
+                    }
+                    Spacer(Modifier.weight(1f))
+                    Text(
+                        text = card.title,
+                        color = contentColor,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }

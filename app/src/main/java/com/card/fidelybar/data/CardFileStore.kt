@@ -34,4 +34,8 @@ class CardFileStore(context: Context) {
             file.writeText(json.encodeToString(CardStoreFile(cards = sorted)))
         }
     }
+
+    fun exportText(): String? = runCatching {
+        if (file.exists()) file.readText() else null
+    }.getOrNull()
 }
