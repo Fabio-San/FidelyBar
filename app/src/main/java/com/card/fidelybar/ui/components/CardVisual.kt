@@ -207,15 +207,6 @@ fun CardVisual(
                     modifier = Modifier.fillMaxSize(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    LogoOrMonogram(
-                        monogram = card.monogram,
-                        logoUrl = card.logoUrl,
-                        containerColor = contentColor.copy(alpha = 0.16f),
-                        contentColor = contentColor,
-                        size = 40,
-                        logoKey = card.presetId
-                    )
-                    Spacer(Modifier.width(12.dp))
                     Text(
                         text = card.title,
                         color = contentColor,
@@ -227,7 +218,7 @@ fun CardVisual(
                         modifier = Modifier.weight(1f)
                     )
                     if (onToggleFavorite != null) {
-                        Spacer(Modifier.width(6.dp))
+                        Spacer(Modifier.width(8.dp))
                         FavoriteToggle(
                             isFavorite = card.isFavorite,
                             onToggle = { onToggleFavorite(!card.isFavorite) },
