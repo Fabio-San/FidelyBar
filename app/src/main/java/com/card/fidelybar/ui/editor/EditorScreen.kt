@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -372,10 +373,16 @@ fun EditorScreen(
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.weight(1f)
                     )
-                    FilledTonalIconButton(onClick = { cameraLauncher.launch(null) }) {
+                    FilledTonalIconButton(
+                        onClick = { cameraLauncher.launch(null) },
+                        modifier = Modifier.offset(y = 4.dp)
+                    ) {
                         Icon(Icons.Filled.PhotoCamera, contentDescription = "Scatta foto")
                     }
-                    FilledTonalIconButton(onClick = { galleryLauncher.launch("image/*") }) {
+                    FilledTonalIconButton(
+                        onClick = { galleryLauncher.launch("image/*") },
+                        modifier = Modifier.offset(y = 4.dp)
+                    ) {
                         Icon(Icons.Filled.FolderOpen, contentDescription = "Galleria")
                     }
                 }
