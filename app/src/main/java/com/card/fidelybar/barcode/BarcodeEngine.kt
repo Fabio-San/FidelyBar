@@ -2,6 +2,8 @@ package com.card.fidelybar.barcode
 
 import android.graphics.Bitmap
 import android.graphics.Color as AndroidColor
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.scale
 import com.card.fidelybar.data.BarcodeFormatType
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.BinaryBitmap
@@ -124,7 +126,7 @@ object BarcodeEngine {
                 pixels[offset + x] = if (matrix[x, y]) darkColor else lightColor
             }
         }
-        return Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888).apply {
+        return createBitmap(widthPx, heightPx).apply {
             setPixels(pixels, 0, widthPx, 0, 0, widthPx, heightPx)
         }
     }
@@ -146,7 +148,7 @@ object BarcodeEngine {
         val scale = maxDim.toFloat() / largest
         val w = (src.width * scale).toInt().coerceAtLeast(1)
         val h = (src.height * scale).toInt().coerceAtLeast(1)
-        return Bitmap.createScaledBitmap(src, w, h, true)
+        return src.scale(w, h, filter = true)
     }
 
     private fun rotate(src: Bitmap, degrees: Float): Bitmap {

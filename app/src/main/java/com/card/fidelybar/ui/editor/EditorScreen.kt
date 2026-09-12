@@ -4,6 +4,17 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -127,11 +138,6 @@ fun EditorScreen(
         logoUrl = c.logoUrl
         isCustomColor = c.presetId == null || c.presetId == StorePreset.CUSTOM
         storeChosen = true
-    }
-
-    val filteredPresets = remember(query) {
-        if (query.isBlank()) StoreCatalog.all
-        else StoreCatalog.all.filter { it.name.lowercase().contains(query.lowercase()) }
     }
 
     val isCustom = presetId == null || presetId == StorePreset.CUSTOM
@@ -283,68 +289,23 @@ fun EditorScreen(
                 SectionHeader(text = "Negozio o programma")
             }
 
-            if (storeChosen) {
-                item {
-                    SelectedStoreBar(
-                        monogram = if (isCustom) 'Φ' else monogram,
-                        logoUrl = if (isCustom) null else logoUrl,
-                        name = if (isCustom) "Su misura" else StoreCatalog.byId[presetId]?.name ?: "Su misura",
-                        subtitle = format.label,
-                        primaryHex = primaryHex,
-                        isCustom = isCustom,
-                        storeId = if (isCustom) null else presetId,
-                        onChange = { storeChosen = false }
-                    )
-                }
-            } else {
-                item {
-                    Box(
-                        modifier = Modifier.padding(bottom = 6.dp).fillMaxWidth(),
-                        contentAlignment = Alignment.CenterStart
-                    ) {
-                        OutlinedTextField(
-                            value = query,
-                            onValueChange = { query = it },
-                            placeholder = { Text("Cerca negozio…") },
-                            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                            singleLine = true,
-                            shape = RoundedCornerShape(16.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-                item {
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        StoreChip(
-                            label = "Su misura",
-                            monogram = 'Φ',
-                            primaryHex = customPalette.first().primary,
-                            selected = false,
-                            onClick = { selectCustom() }
-                        )
-                        filteredPresets.forEach { preset ->
-                            StoreChip(
-                                label = preset.name,
-                                monogram = preset.monogram,
-                                primaryHex = preset.primaryColorHex,
-                                selected = false,
-                                logoKey = preset.id,
-                                onClick = { selectPreset(preset) }
-                            )
-                        }
-                    }
-                }
-                item {
-                    Text(
-                        text = "Poi potrai cambiare ente in qualsiasi momento.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 10.dp, bottom = 4.dp)
-                    )
-                }
+            item {
+                StorePickerSection(
+                    storeChosen = storeChosen,
+                    isCustom = isCustom,
+                    monogram = if (isCustom) 'Φ' else monogram,
+                    logoUrl = if (isCustom) null else logoUrl,
+                    name = if (isCustom) "Su misura" else StoreCatalog.byId[presetId]?.name ?: "Su misura",
+                    subtitle = format.label,
+                    primaryHex = primaryHex,
+                    storeId = if (isCustom) null else presetId,
+                    customPalettePrimary = customPalette.first().primary,
+                    query = query,
+                    onQueryChange = { query = it },
+                    onSelectPreset = { selectPreset(it) },
+                    onSelectCustom = { selectCustom() },
+                    onChange = { storeChosen = false }
+                )
             }
 
             // ---------- STEP 2 · Codice ----------
@@ -527,6 +488,107 @@ private fun SectionHeader(text: String, modifier: Modifier = Modifier) {
         style = MaterialTheme.typography.titleMedium,
         modifier = modifier.padding(top = 20.dp, bottom = 10.dp)
     )
+}
+
+@Composable
+private fun StorePickerSection(
+    storeChosen: Boolean,
+    isCustom: Boolean,
+    monogram: Char,
+    logoUrl: String?,
+    name: String,
+    subtitle: String,
+    primaryHex: String,
+    storeId: String?,
+    customPalettePrimary: String,
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onSelectPreset: (StorePreset) -> Unit,
+    onSelectCustom: () -> Unit,
+    onChange: () -> Unit
+) {
+    AnimatedContent(
+        targetState = storeChosen,
+        transitionSpec = {
+            (fadeIn(tween(240)) + slideInHorizontally(tween(260)) { it / 6 } + scaleIn(initialScale = 0.96f))
+                .togetherWith(
+                    fadeOut(tween(150)) + slideOutHorizontally(tween(200)) { -it / 6 } + scaleOut(targetScale = 0.96f)
+                )
+        },
+        label = "storePicker"
+    ) { chosen ->
+        if (chosen) {
+            SelectedStoreBar(
+                monogram = monogram,
+                logoUrl = logoUrl,
+                name = name,
+                subtitle = subtitle,
+                primaryHex = primaryHex,
+                isCustom = isCustom,
+                storeId = storeId,
+                onChange = onChange
+            )
+        } else {
+            Column {
+                Box(
+                    modifier = Modifier.padding(bottom = 6.dp).fillMaxWidth(),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = onQueryChange,
+                        placeholder = { Text("Cerca negozio…") },
+                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                val q = query.trim().lowercase()
+                FlowRow(
+                    modifier = Modifier.animateContentSize(tween(200)),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    AnimatedVisibility(
+                        visible = q.isEmpty() || "Su misura".contains(q),
+                        enter = fadeIn(tween(180)) + scaleIn(initialScale = 0.85f),
+                        exit = fadeOut(tween(120)) + scaleOut(targetScale = 0.85f)
+                    ) {
+                        StoreChip(
+                            label = "Su misura",
+                            monogram = 'Φ',
+                            primaryHex = customPalettePrimary,
+                            selected = false,
+                            onClick = onSelectCustom
+                        )
+                    }
+                    StoreCatalog.all.forEach { preset ->
+                        AnimatedVisibility(
+                            visible = q.isEmpty() || preset.name.lowercase().contains(q),
+                            enter = fadeIn(tween(180)) + scaleIn(initialScale = 0.85f),
+                            exit = fadeOut(tween(120)) + scaleOut(targetScale = 0.85f)
+                        ) {
+                            StoreChip(
+                                label = preset.name,
+                                monogram = preset.monogram,
+                                primaryHex = preset.primaryColorHex,
+                                selected = false,
+                                logoKey = preset.id,
+                                onClick = { onSelectPreset(preset) }
+                            )
+                        }
+                    }
+                }
+                Text(
+                    text = "Poi potrai cambiare ente in qualsiasi momento.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 10.dp, bottom = 4.dp)
+                )
+            }
+        }
+    }
 }
 
 @Composable
