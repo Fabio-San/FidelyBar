@@ -29,19 +29,20 @@ object Routes {
 
 private val TransitionEase = FastOutSlowInEasing
 
-// Apertura (es. Home -> creazione tessera): la nuova schermata sale dal basso.
-private fun navEnter() = fadeIn(tween(480, easing = TransitionEase)) +
-    slideInVertically(tween(560, easing = TransitionEase)) { it }
+// Apertura (es. Home -> creazione tessera): la nuova schermata sale dal basso
+// e il contenuto è subito visibile (fade rapido), lo slide resta morbido.
+private fun navEnter() = fadeIn(tween(140, easing = TransitionEase)) +
+    slideInVertically(tween(480, easing = TransitionEase)) { it }
 
 // Uscita della schermata sottostante durante un push.
-private fun navExit() = fadeOut(tween(360, easing = TransitionEase))
+private fun navExit() = fadeOut(tween(200, easing = TransitionEase))
 
-// Ritorno indietro (pop): la Home resta ferma e viene svelata dal fade.
-private fun navPopEnter() = fadeIn(tween(480, easing = TransitionEase))
+// Ritorno indietro (pop): la Home resta ferma e viene svelata subito.
+private fun navPopEnter() = fadeIn(tween(140, easing = TransitionEase))
 
 // La schermata chiusa viene "tirata giù": esce scendendo verso il basso.
-private fun navPopExit() = fadeOut(tween(360, easing = TransitionEase)) +
-    slideOutVertically(tween(560, easing = TransitionEase)) { it }
+private fun navPopExit() = fadeOut(tween(180, easing = TransitionEase)) +
+    slideOutVertically(tween(480, easing = TransitionEase)) { it }
 
 @Composable
 fun FidelyBarApp(viewModel: FidelyBarViewModel) {

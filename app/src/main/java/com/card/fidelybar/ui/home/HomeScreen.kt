@@ -102,10 +102,10 @@ fun HomeScreen(
                 val fabSource = remember { MutableInteractionSource() }
                 val fabPressed by fabSource.collectIsPressedAsState()
                 val fabScale by animateFloatAsState(
-                    targetValue = if (fabPressed) 0.88f else 1f,
+                    targetValue = if (fabPressed) 0.90f else 1f,
                     animationSpec = spring(
-                        dampingRatio = if (fabPressed) Spring.DampingRatioNoBouncy else Spring.DampingRatioLowBouncy,
-                        stiffness = Spring.StiffnessMediumLow
+                        dampingRatio = if (fabPressed) Spring.DampingRatioNoBouncy else Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
                     ),
                     label = "fabScale"
                 )
