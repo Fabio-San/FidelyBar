@@ -33,11 +33,14 @@ object Routes {
 
 private val TransitionEase = FastOutSlowInEasing
 
-private fun navEnter() = fadeIn(tween(200, easing = TransitionEase)) +
-    slideInVertically(tween(260, easing = TransitionEase)) { it / 10 } +
+private fun navEnter() = fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) +
+    slideInVertically(tween(300, easing = TransitionEase)) { it } +
     scaleIn(
-        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
-        initialScale = 0.97f
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioLowBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        initialScale = 0.90f
     )
 
 private fun navExit() = fadeOut(tween(130, easing = TransitionEase)) +
