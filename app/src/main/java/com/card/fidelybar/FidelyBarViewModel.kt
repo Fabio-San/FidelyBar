@@ -96,6 +96,15 @@ class FidelyBarViewModel(app: Application) : AndroidViewModel(app) {
         persist()
     }
 
+    fun exportJson(): String? =
+        if (_cards.value.isEmpty()) null else store.encodeCards(_cards.value)
+
+    fun importCards(cards: List<UserCard>) {
+        _cards.value = cards
+        persist()
+        prefetchLogos()
+    }
+
     private fun persist() {
         viewModelScope.launch(Dispatchers.IO) {
             store.save(_cards.value)

@@ -37,7 +37,11 @@ class CardFileStore(context: Context) {
 
     fun hasBackup(): Boolean = file.exists()
 
-    fun exportText(): String? = runCatching {
-        if (file.exists()) file.readText() else null
-    }.getOrNull()
+    fun decode(text: String): List<UserCard> =
+        runCatching {
+            json.decodeFromString<CardStoreFile>(text).cards
+        }.getOrDefault(emptyList())
+
+    fun encodeCards(cards: List<UserCard>): String =
+        json.encodeToString(CardStoreFile(cards = cards))
 }

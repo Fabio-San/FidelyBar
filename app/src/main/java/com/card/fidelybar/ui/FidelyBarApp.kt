@@ -58,6 +58,7 @@ fun FidelyBarApp(viewModel: FidelyBarViewModel) {
         }
         composable(Routes.SETTINGS) {
             SettingsScreen(
+                viewModel = viewModel,
                 onBack = { navController.popBackStack() }
             )
         }
