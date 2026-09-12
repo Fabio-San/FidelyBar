@@ -1,11 +1,5 @@
 package com.card.fidelybar.ui
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -27,26 +21,13 @@ object Routes {
     fun card(cardId: String) = "card/$cardId"
 }
 
-private val TransitionEase = FastOutSlowInEasing
-
-private fun navEnter() = slideInVertically(tween(320, easing = TransitionEase)) { it } + fadeIn(tween(200, easing = TransitionEase))
-
-private fun navExit() = fadeOut(tween(140, easing = TransitionEase))
-
-private fun navPopExit() = fadeOut(tween(180, easing = TransitionEase)) +
-    slideOutVertically(tween(280, easing = TransitionEase)) { it / 2 }
-
 @Composable
 fun FidelyBarApp(viewModel: FidelyBarViewModel) {
     val navController = rememberNavController()
 
     NavHost(
         navController = navController,
-        startDestination = Routes.HOME,
-        enterTransition = { navEnter() },
-        exitTransition = { navExit() },
-        popEnterTransition = { navEnter() },
-        popExitTransition = { navPopExit() }
+        startDestination = Routes.HOME
     ) {
         composable(Routes.HOME) {
             HomeScreen(

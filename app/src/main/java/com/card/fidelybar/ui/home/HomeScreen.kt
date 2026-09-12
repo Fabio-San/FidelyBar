@@ -1,13 +1,6 @@
 package com.card.fidelybar.ui.home
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,8 +43,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -100,37 +91,11 @@ fun HomeScreen(
         containerColor = Color.Transparent,
         floatingActionButton = {
             if (cards.isNotEmpty()) {
-                val fabSource = remember { MutableInteractionSource() }
-                val fabPressed by fabSource.collectIsPressedAsState()
-                val fabScale by animateFloatAsState(
-                    targetValue = if (fabPressed) 0.94f else 1f,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMedium
-                    ),
-                    label = "fabScale"
-                )
-                val fabContainer by animateColorAsState(
-                    targetValue = if (fabPressed)
-                        lerp(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            MaterialTheme.colorScheme.primary,
-                            0.14f
-                        )
-                    else MaterialTheme.colorScheme.primaryContainer,
-                    label = "fabContainer"
-                )
                 ExtendedFloatingActionButton(
                     onClick = onAddCard,
-                    interactionSource = fabSource,
-                    containerColor = fabContainer,
                     icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                     text = { Text("Nuova carta") },
-                    shape = RoundedCornerShape(28.dp),
-                    modifier = Modifier.graphicsLayer {
-                        scaleX = fabScale
-                        scaleY = fabScale
-                    }
+                    shape = RoundedCornerShape(28.dp)
                 )
             }
         }
@@ -375,24 +340,9 @@ private fun EmptyHome(
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(24.dp))
-        val ctaSource = remember { MutableInteractionSource() }
-        val ctaPressed by ctaSource.collectIsPressedAsState()
-        val ctaScale by animateFloatAsState(
-            targetValue = if (ctaPressed) 0.96f else 1f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioNoBouncy,
-                stiffness = Spring.StiffnessMedium
-            ),
-            label = "ctaScale"
-        )
         Button(
             onClick = onAdd,
-            interactionSource = ctaSource,
-            shape = RoundedCornerShape(28.dp),
-            modifier = Modifier.graphicsLayer {
-                scaleX = ctaScale
-                scaleY = ctaScale
-            }
+            shape = RoundedCornerShape(28.dp)
         ) {
             Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.size(8.dp))
