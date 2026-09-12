@@ -12,6 +12,7 @@ class FidelyBarApplication : Application(), SingletonImageLoader.Factory {
     override fun onCreate() {
         super.onCreate()
         AppSettings.init(this)
+        com.card.fidelybar.ui.components.LogoBitmapCache.warmAll(this)
     }
 
     override fun newImageLoader(context: Context): ImageLoader {

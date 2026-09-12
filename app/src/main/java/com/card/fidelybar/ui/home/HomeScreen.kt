@@ -301,7 +301,6 @@ private fun CardListItem(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 1.dp,
-        shadowElevation = 1.dp,
         modifier = modifier
     ) {
         Row(

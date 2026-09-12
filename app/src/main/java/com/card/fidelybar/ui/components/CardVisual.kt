@@ -1,7 +1,12 @@
 package com.card.fidelybar.ui.components
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.LruCache
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,6 +41,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -62,6 +69,50 @@ private fun foregroundFor(background: Color): Color {
     val onDark = Color.White
     val onLight = Color(0xFF1B1C1E)
     return if (luma > 0.58f) onLight else onDark
+}
+
+object LogoBitmapCache {
+    private const val TARGET_PX = 160
+
+    private val cache = object : LruCache<String, ImageBitmap>(4 * 1024 * 1024) {
+        override fun sizeOf(key: String, value: ImageBitmap): Int = value.width * value.height * 4
+    }
+
+    fun get(context: Context, logoKey: String): ImageBitmap? {
+        cache.get(logoKey)?.let { return it }
+        val resId = context.resources.getIdentifier("logo_$logoKey", "drawable", context.packageName)
+        if (resId == 0) return null
+        val bitmap = decode(context, resId) ?: return null
+        val image = bitmap.asImageBitmap()
+        cache.put(logoKey, image)
+        return image
+    }
+
+    fun getCached(logoKey: String): ImageBitmap? = cache.get(logoKey)
+
+    private fun decode(context: Context, resId: Int): Bitmap? {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeResource(context.resources, resId, bounds)
+        var sample = 1
+        while (bounds.outWidth / (sample * 2) >= TARGET_PX || bounds.outHeight / (sample * 2) >= TARGET_PX) {
+            sample *= 2
+        }
+        return BitmapFactory.decodeResource(
+            context.resources, resId,
+            BitmapFactory.Options().apply { inSampleSize = sample }
+        )
+    }
+
+    fun warmAll(context: Context) {
+        Thread(
+            {
+                com.card.fidelybar.data.StoreCatalog.all.forEach { preset ->
+                    get(context, preset.id)
+                }
+            },
+            "logo-warmup"
+        ).start()
+    }
 }
 
 @Composable
@@ -93,16 +144,29 @@ fun LogoOrMonogram(
             if (logoKey == null) 0
             else resources.getIdentifier("logo_$logoKey", "drawable", context.packageName)
         }
+        val localLogo = remember(logoKey) {
+            if (logoKey == null || resId == 0) null else LogoBitmapCache.get(context, logoKey)
+        }
         val cachedFile = remember(logoUrl) {
             logoUrl?.let { com.card.fidelybar.data.LogoCache.fileFor(context, it) }
         }
         val model: Any? = when {
-            resId != 0 -> resId
+            localLogo != null -> null
             cachedFile != null -> cachedFile
             logoUrl != null -> logoUrl
             else -> null
         }
-        if (model != null) {
+        if (localLogo != null) {
+            Image(
+                bitmap = localLogo,
+                contentDescription = null,
+                contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(Color.White.copy(alpha = 0.85f), CircleShape)
+                    .padding(6.dp)
+            )
+        } else if (model != null) {
             AsyncImage(
                 model = model,
                 contentDescription = null,
