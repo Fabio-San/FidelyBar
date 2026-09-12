@@ -102,10 +102,10 @@ fun HomeScreen(
                 val fabSource = remember { MutableInteractionSource() }
                 val fabPressed by fabSource.collectIsPressedAsState()
                 val fabScale by animateFloatAsState(
-                    targetValue = if (fabPressed) 0.94f else 1f,
+                    targetValue = if (fabPressed) 0.88f else 1f,
                     animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMedium
+                        dampingRatio = if (fabPressed) Spring.DampingRatioNoBouncy else Spring.DampingRatioLowBouncy,
+                        stiffness = Spring.StiffnessMediumLow
                     ),
                     label = "fabScale"
                 )
@@ -114,7 +114,7 @@ fun HomeScreen(
                         lerp(
                             MaterialTheme.colorScheme.primaryContainer,
                             MaterialTheme.colorScheme.primary,
-                            0.14f
+                            0.25f
                         )
                     else MaterialTheme.colorScheme.primaryContainer,
                     label = "fabContainer"

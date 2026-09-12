@@ -36,13 +36,12 @@ private fun navEnter() = fadeIn(tween(240, easing = TransitionEase)) +
 // Uscita della schermata sottostante durante un push.
 private fun navExit() = fadeOut(tween(160, easing = TransitionEase))
 
-// Ritorno indietro (pop): la schermata di destinazione scende dall'alto verso il basso.
-private fun navPopEnter() = fadeIn(tween(220, easing = TransitionEase)) +
-    slideInVertically(tween(320, easing = TransitionEase)) { -it }
+// Ritorno indietro (pop): la Home resta ferma e viene svelata dal fade.
+private fun navPopEnter() = fadeIn(tween(240, easing = TransitionEase))
 
-// La schermata chiusa esce scendendo verso il basso.
+// La schermata chiusa viene "tirata giù": esce scendendo verso il basso.
 private fun navPopExit() = fadeOut(tween(160, easing = TransitionEase)) +
-    slideOutVertically(tween(300, easing = TransitionEase)) { it }
+    slideOutVertically(tween(340, easing = TransitionEase)) { it }
 
 @Composable
 fun FidelyBarApp(viewModel: FidelyBarViewModel) {
