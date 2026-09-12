@@ -105,8 +105,8 @@ fun HomeScreen(
                 val fabScale by animateFloatAsState(
                     targetValue = if (fabPressed) 0.94f else 1f,
                     animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMediumLow
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium
                     ),
                     label = "fabScale"
                 )
@@ -380,8 +380,8 @@ private fun EmptyHome(
         val ctaScale by animateFloatAsState(
             targetValue = if (ctaPressed) 0.96f else 1f,
             animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMediumLow
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMedium
             ),
             label = "ctaScale"
         )
