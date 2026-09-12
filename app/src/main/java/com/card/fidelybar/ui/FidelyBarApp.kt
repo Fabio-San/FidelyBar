@@ -1,13 +1,9 @@
 package com.card.fidelybar.ui
 
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.runtime.Composable
@@ -33,21 +29,20 @@ object Routes {
 
 private val TransitionEase = FastOutSlowInEasing
 
-private fun navEnter() = fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) +
-    slideInVertically(tween(300, easing = TransitionEase)) { it } +
-    scaleIn(
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioLowBouncy,
-            stiffness = Spring.StiffnessMediumLow
-        ),
-        initialScale = 0.90f
-    )
+// Apertura (es. Home -> creazione tessera): la nuova schermata sale dal basso.
+private fun navEnter() = fadeIn(tween(240, easing = TransitionEase)) +
+    slideInVertically(tween(340, easing = TransitionEase)) { it }
 
-private fun navExit() = fadeOut(tween(130, easing = TransitionEase)) +
-    scaleOut(tween(130, easing = TransitionEase), targetScale = 1.02f)
+// Uscita della schermata sottostante durante un push.
+private fun navExit() = fadeOut(tween(160, easing = TransitionEase))
 
-private fun navPopExit() = fadeOut(tween(150, easing = TransitionEase)) +
-    slideOutVertically(tween(220, easing = TransitionEase)) { it / 3 }
+// Ritorno indietro (pop): la schermata di destinazione scende dall'alto verso il basso.
+private fun navPopEnter() = fadeIn(tween(220, easing = TransitionEase)) +
+    slideInVertically(tween(320, easing = TransitionEase)) { -it }
+
+// La schermata chiusa esce scendendo verso il basso.
+private fun navPopExit() = fadeOut(tween(160, easing = TransitionEase)) +
+    slideOutVertically(tween(300, easing = TransitionEase)) { it }
 
 @Composable
 fun FidelyBarApp(viewModel: FidelyBarViewModel) {
@@ -58,7 +53,7 @@ fun FidelyBarApp(viewModel: FidelyBarViewModel) {
         startDestination = Routes.HOME,
         enterTransition = { navEnter() },
         exitTransition = { navExit() },
-        popEnterTransition = { navEnter() },
+        popEnterTransition = { navPopEnter() },
         popExitTransition = { navPopExit() }
     ) {
         composable(Routes.HOME) {
