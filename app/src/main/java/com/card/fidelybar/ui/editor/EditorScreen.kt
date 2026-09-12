@@ -5,13 +5,9 @@ import android.graphics.BitmapFactory
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -24,6 +20,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -510,9 +509,9 @@ private fun StorePickerSection(
     AnimatedContent(
         targetState = storeChosen,
         transitionSpec = {
-            (fadeIn(tween(240)) + slideInHorizontally(tween(260)) { it / 6 } + scaleIn(initialScale = 0.96f))
+            (fadeIn(tween(200)) + slideInHorizontally(tween(240)) { it / 8 })
                 .togetherWith(
-                    fadeOut(tween(150)) + slideOutHorizontally(tween(200)) { -it / 6 } + scaleOut(targetScale = 0.96f)
+                    fadeOut(tween(140)) + slideOutHorizontally(tween(180)) { -it / 8 }
                 )
         },
         label = "storePicker"
@@ -545,38 +544,37 @@ private fun StorePickerSection(
                     )
                 }
                 val q = query.trim().lowercase()
-                FlowRow(
-                    modifier = Modifier.animateContentSize(tween(200)),
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 104.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 280.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    AnimatedVisibility(
-                        visible = q.isEmpty() || "Su misura".contains(q),
-                        enter = fadeIn(tween(180)) + scaleIn(initialScale = 0.85f),
-                        exit = fadeOut(tween(120)) + scaleOut(targetScale = 0.85f)
-                    ) {
-                        StoreChip(
-                            label = "Su misura",
-                            monogram = 'Φ',
-                            primaryHex = customPalettePrimary,
-                            selected = false,
-                            onClick = onSelectCustom
-                        )
+                    if (q.isEmpty() || "su misura".contains(q)) {
+                        item(key = "su-misura") {
+                            StoreChip(
+                                label = "Su misura",
+                                monogram = 'Φ',
+                                primaryHex = customPalettePrimary,
+                                selected = false,
+                                onClick = onSelectCustom
+                            )
+                        }
                     }
                     StoreCatalog.all.forEach { preset ->
-                        AnimatedVisibility(
-                            visible = q.isEmpty() || preset.name.lowercase().contains(q),
-                            enter = fadeIn(tween(180)) + scaleIn(initialScale = 0.85f),
-                            exit = fadeOut(tween(120)) + scaleOut(targetScale = 0.85f)
-                        ) {
-                            StoreChip(
-                                label = preset.name,
-                                monogram = preset.monogram,
-                                primaryHex = preset.primaryColorHex,
-                                selected = false,
-                                logoKey = preset.id,
-                                onClick = { onSelectPreset(preset) }
-                            )
+                        if (q.isEmpty() || preset.name.lowercase().contains(q)) {
+                            item(key = preset.id) {
+                                StoreChip(
+                                    label = preset.name,
+                                    monogram = preset.monogram,
+                                    primaryHex = preset.primaryColorHex,
+                                    selected = false,
+                                    logoKey = preset.id,
+                                    onClick = { onSelectPreset(preset) }
+                                )
+                            }
                         }
                     }
                 }
