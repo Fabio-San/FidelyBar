@@ -53,14 +53,19 @@ fun SettingsScreen(onBack: () -> Unit) {
     val store = remember { CardFileStore(context) }
     val versionInfo = remember {
         runCatching {
-            val info = context.packageManager.getPackageInfo(
-                context.packageName,
-                android.content.pm.PackageManager.PackageInfoFlags.of(0)
-            )
+            val info = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.getPackageInfo(
+                    context.packageName,
+                    android.content.pm.PackageManager.PackageInfoFlags.of(0)
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.getPackageInfo(context.packageName, 0)
+            }
             "v${info.versionName} (build ${info.longVersionCode})"
-        }.getOrDefault("v1.7.0")
+        }.getOrDefault("versione non disponibile")
     }
-    val hasBackup = remember { store.exportText() != null }
+    val hasBackup = remember { store.hasBackup() }
 
     Box(
         modifier = Modifier

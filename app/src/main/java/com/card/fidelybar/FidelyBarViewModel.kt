@@ -40,8 +40,6 @@ class FidelyBarViewModel(app: Application) : AndroidViewModel(app) {
 
     fun getCard(id: String): UserCard? = _cards.value.firstOrNull { it.id == id }
 
-    fun getCardFlow(id: String) = _cards.asStateFlow()
-
     fun addCard(
         presetId: String?,
         title: String,

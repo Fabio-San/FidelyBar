@@ -63,6 +63,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.core.graphics.toColorInt
 import com.card.fidelybar.FidelyBarViewModel
 import com.card.fidelybar.barcode.BarcodeEngine
 import com.card.fidelybar.data.BarcodeFormatType
@@ -539,7 +540,7 @@ private fun SelectedStoreBar(
     storeId: String?,
     onChange: () -> Unit
 ) {
-    val color = Color(android.graphics.Color.parseColor(primaryHex))
+    val color = Color(primaryHex.toColorInt())
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -587,7 +588,7 @@ private fun StoreChip(
     logoKey: String? = null,
     onClick: () -> Unit
 ) {
-    val color = Color(android.graphics.Color.parseColor(primaryHex))
+    val color = Color(primaryHex.toColorInt())
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(14.dp),
@@ -619,7 +620,7 @@ private fun Swatch(
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    val color = Color(android.graphics.Color.parseColor(choice.primary))
+    val color = Color(choice.primary.toColorInt())
     Box(
         modifier = Modifier
             .size(38.dp)

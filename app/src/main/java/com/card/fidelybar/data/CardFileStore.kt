@@ -35,6 +35,8 @@ class CardFileStore(context: Context) {
         }
     }
 
+    fun hasBackup(): Boolean = file.exists()
+
     fun exportText(): String? = runCatching {
         if (file.exists()) file.readText() else null
     }.getOrNull()

@@ -49,6 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.toColorInt
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.card.fidelybar.FidelyBarViewModel
 import com.card.fidelybar.data.UserCard
@@ -261,7 +262,7 @@ private fun CardListItem(
     onClick: () -> Unit
 ) {
     val accent = remember(card.primaryColorHex) {
-        Color(android.graphics.Color.parseColor(card.primaryColorHex))
+        Color(card.primaryColorHex.toColorInt())
     }
     Surface(
         onClick = onClick,

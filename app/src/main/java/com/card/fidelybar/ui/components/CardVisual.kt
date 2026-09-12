@@ -20,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -36,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -43,7 +43,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.card.fidelybar.data.UserCard
-import com.card.fidelybar.ui.theme.Gold
 
 @Composable
 private fun rememberColor(hex: String): Color {
@@ -63,30 +62,6 @@ private fun foregroundFor(background: Color): Color {
     val onDark = Color.White
     val onLight = Color(0xFF1B1C1E)
     return if (luma > 0.58f) onLight else onDark
-}
-
-@Composable
-fun MonogramAvatar(
-    monogram: Char,
-    containerColor: Color,
-    contentColor: Color,
-    modifier: Modifier = Modifier,
-    size: Int = 40
-) {
-    Box(
-        modifier = modifier
-            .size(size.dp)
-            .clip(CircleShape)
-            .background(containerColor),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = monogram.toString(),
-            color = contentColor,
-            fontWeight = FontWeight.Bold,
-            fontSize = (size * 0.42f).sp
-        )
-    }
 }
 
 @Composable
@@ -113,9 +88,10 @@ fun LogoOrMonogram(
             fontSize = (size * 0.42f).sp
         )
         val context = LocalContext.current
+        val resources = LocalResources.current
         val resId = remember(logoKey) {
             if (logoKey == null) 0
-            else context.resources.getIdentifier("logo_$logoKey", "drawable", context.packageName)
+            else resources.getIdentifier("logo_$logoKey", "drawable", context.packageName)
         }
         val cachedFile = remember(logoUrl) {
             logoUrl?.let { com.card.fidelybar.data.LogoCache.fileFor(context, it) }
@@ -308,23 +284,5 @@ fun CardVisual(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun StarBadge(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .clip(CircleShape)
-            .background(Gold.copy(alpha = 0.22f))
-            .padding(6.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = Icons.Filled.Star,
-            contentDescription = null,
-            tint = Gold,
-            modifier = Modifier.size(16.dp)
-        )
     }
 }

@@ -131,7 +131,7 @@ object BarcodeEngine {
 
     /** Prova a leggere un codice a barre/QR da una bitmap (foto o galleria). */
     fun decode(bitmap: Bitmap): DecodeResult? {
-        val normalized = downscaleIfNeeded(if (bitmap.width < bitmap.height) bitmap else bitmap)
+        val normalized = downscaleIfNeeded(bitmap)
         listOf(0f, 90f, 180f, 270f).forEach { angle ->
             val candidate = if (angle == 0f) normalized else rotate(normalized, angle)
             decodeOnce(candidate)?.let { return it }

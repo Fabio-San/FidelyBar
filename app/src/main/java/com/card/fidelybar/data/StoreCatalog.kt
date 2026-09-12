@@ -99,14 +99,4 @@ object StoreCatalog {
     )
 
     val byId: Map<String, StorePreset> = all.associateBy { it.id }
-
-    sealed interface StoreChoice {
-        data class Preset(val preset: StorePreset) : StoreChoice
-        data object Custom : StoreChoice
-    }
-
-    fun fromIdOrCustom(id: String?): StoreChoice? = when (id) {
-        null, StorePreset.CUSTOM -> StoreChoice.Custom
-        else -> byId[id]?.let { StoreChoice.Preset(it) }
-    }
 }

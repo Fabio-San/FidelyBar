@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- I loghi delle catene sono recuperati dinamicamente via getIdentifier
+         (vedi LogoOrMonogram) quindi lint non ne vede l'uso statico. -->
+    <issue id="UnusedResources">
+        <ignore regexp="res/drawable/logo_.+\.(png|jpg|jpeg|webp)" />
+    </issue>
+    <issue id="IconLocation">
+        <ignore regexp="res/drawable/logo_.+\.(png|jpg|jpeg|webp)" />
+    </issue>
+</lint>
