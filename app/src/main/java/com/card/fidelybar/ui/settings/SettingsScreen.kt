@@ -63,9 +63,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.card.fidelybar.FidelyBarViewModel
 import com.card.fidelybar.data.AppSettings
+import com.card.fidelybar.data.BarcodeFormatType
 import com.card.fidelybar.data.CardFileStore
+import com.card.fidelybar.data.FontScale
 import com.card.fidelybar.data.ThemeMode
 import com.card.fidelybar.data.UserCard
+import com.card.fidelybar.ui.components.CardVisual
 
 data class SettingsItem(
     val icon: ImageVector,
@@ -80,8 +83,10 @@ fun SettingsScreen(viewModel: FidelyBarViewModel, onBack: () -> Unit) {
     val context = LocalContext.current
     val store = remember { CardFileStore(context) }
     val themeMode by AppSettings.themeMode.collectAsState()
+    val fontScale by AppSettings.fontScale.collectAsState()
     val cards by viewModel.cards.collectAsStateWithLifecycle()
     var pendingImport by remember { mutableStateOf<ImportOffer?>(null) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     val versionInfo = remember {
         runCatching {
@@ -96,6 +101,23 @@ fun SettingsScreen(viewModel: FidelyBarViewModel, onBack: () -> Unit) {
             }
             "v${info.versionName} (build ${info.longVersionCode})"
         }.getOrDefault("versione non disponibile")
+    }
+
+    val saveFileLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        val json = viewModel.exportJson()
+        if (json != null) {
+            val ok = runCatching {
+                context.contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray()) } != null
+            }.getOrDefault(false)
+            Toast.makeText(
+                context,
+                if (ok) "Backup salvato nel file" else "Impossibile salvare il file",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
     }
 
     val importLauncher = rememberLauncherForActivityResult(
@@ -163,10 +185,35 @@ fun SettingsScreen(viewModel: FidelyBarViewModel, onBack: () -> Unit) {
                 )
                 SectionCard(modifier = Modifier.padding(horizontal = 20.dp)) {
                     Column {
+                        Text(
+                            text = "Tema",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(Modifier.height(8.dp))
                         ThemeSegmentedRow(selected = themeMode, onSelect = AppSettings::setThemeMode)
+                        Spacer(Modifier.height(14.dp))
+                        Text(
+                            text = "Dimensione carattere",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        FontScaleSegmentedRow(selected = fontScale, onSelect = AppSettings::setFontScale)
+                        Spacer(Modifier.height(14.dp))
+                        Text(
+                            text = "Anteprima",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        CardPreview()
                         Spacer(Modifier.height(12.dp))
                         Text(
-                            text = "Con i colori dinamici i toni seguono lo sfondo del sistema; in Chiaro/Scuro la scelta è fissa.",
+                            text = "Colori dinamici e dimensione carattere si applicano subito a tutta l'app.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -219,6 +266,21 @@ fun SettingsScreen(viewModel: FidelyBarViewModel, onBack: () -> Unit) {
                             }
                             OutlinedButton(
                                 onClick = {
+                                    saveFileLauncher.launch("fidelybar_backup.json")
+                                },
+                                enabled = cards.isNotEmpty(),
+                                shape = RoundedCornerShape(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.PhotoLibrary,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text("Salva")
+                            }
+                            OutlinedButton(
+                                onClick = {
                                     importLauncher.launch(arrayOf("application/json", "text/*", "*/*"))
                                 },
                                 shape = RoundedCornerShape(28.dp)
@@ -231,6 +293,23 @@ fun SettingsScreen(viewModel: FidelyBarViewModel, onBack: () -> Unit) {
                                 Spacer(Modifier.width(8.dp))
                                 Text("Importa")
                             }
+                        }
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        TextButton(
+                            onClick = { showDeleteConfirm = true },
+                            enabled = cards.isNotEmpty(),
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Backup,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "Elimina tutte le carte",
+                                color = MaterialTheme.colorScheme.error
+                            )
                         }
                     }
                 }
@@ -328,6 +407,28 @@ fun SettingsScreen(viewModel: FidelyBarViewModel, onBack: () -> Unit) {
             }
         )
     }
+
+    if (showDeleteConfirm) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Elimina tutte le carte") },
+            text = {
+                Text("Vuoi davvero eliminare tutte le ${cards.size} carte dal dispositivo? L'azione è irreversibile.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteConfirm = false
+                        viewModel.deleteAllCards()
+                        Toast.makeText(context, "Tutte le carte sono state eliminate", Toast.LENGTH_SHORT).show()
+                    }
+                ) { Text("Elimina", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) { Text("Annulla") }
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -352,6 +453,50 @@ private fun ThemeSegmentedRow(
             )
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FontScaleSegmentedRow(
+    selected: FontScale,
+    onSelect: (FontScale) -> Unit
+) {
+    val options = listOf(
+        FontScale.NORMAL to "Normale",
+        FontScale.LARGE to "Grande",
+        FontScale.EXTRA_LARGE to "Extra"
+    )
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        options.forEachIndexed { index, (scale, label) ->
+            SegmentedButton(
+                selected = selected == scale,
+                onClick = { onSelect(scale) },
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                label = { Text(label) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun CardPreview() {
+    val sample = remember {
+        UserCard(
+            id = "preview",
+            title = "Carta di esempio",
+            number = "8001234567890",
+            format = BarcodeFormatType.EAN13,
+            primaryColorHex = "#006C4C",
+            secondaryColorHex = "#004D35",
+            monogram = 'Φ'
+        )
+    }
+    CardVisual(
+        card = sample,
+        modifier = Modifier.fillMaxWidth(),
+        compact = true,
+        onClick = {}
+    )
 }
 
 private val privacyItems = listOf(

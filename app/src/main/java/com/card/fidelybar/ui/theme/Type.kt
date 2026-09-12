@@ -5,6 +5,28 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
+private fun TextStyle.sized(multiplier: Float) = copy(
+    fontSize = fontSize * multiplier,
+    lineHeight = lineHeight * multiplier,
+    letterSpacing = letterSpacing * multiplier
+)
+
+fun Typography.scaled(multiplier: Float): Typography = if (multiplier <= 1f) this else Typography(
+    displayLarge = displayLarge.sized(multiplier),
+    displayMedium = displayMedium.sized(multiplier),
+    headlineMedium = headlineMedium.sized(multiplier),
+    headlineSmall = headlineSmall.sized(multiplier),
+    titleLarge = titleLarge.sized(multiplier),
+    titleMedium = titleMedium.sized(multiplier),
+    titleSmall = titleSmall.sized(multiplier),
+    bodyLarge = bodyLarge.sized(multiplier),
+    bodyMedium = bodyMedium.sized(multiplier),
+    bodySmall = bodySmall.sized(multiplier),
+    labelLarge = labelLarge.sized(multiplier),
+    labelMedium = labelMedium.sized(multiplier),
+    labelSmall = labelSmall.sized(multiplier)
+)
+
 val Typography = Typography(
     displayLarge = TextStyle(
         fontWeight = FontWeight.Bold,

@@ -105,6 +105,11 @@ class FidelyBarViewModel(app: Application) : AndroidViewModel(app) {
         prefetchLogos()
     }
 
+    fun deleteAllCards() {
+        _cards.value = emptyList()
+        persist()
+    }
+
     private fun persist() {
         viewModelScope.launch(Dispatchers.IO) {
             store.save(_cards.value)

@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.card.fidelybar.data.AppSettings
+import com.card.fidelybar.data.FontScale
 import com.card.fidelybar.data.ThemeMode
 
 private val DarkColorScheme = darkColorScheme(
@@ -73,6 +74,9 @@ fun FidelyBarTheme(
         ThemeMode.DARK -> true
     }
 
+    val fontScale by AppSettings.fontScale.collectAsState()
+    val typography = Typography.scaled(fontScale.multiplier)
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
@@ -85,7 +89,7 @@ fun FidelyBarTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = typography,
         shapes = FidelyShapes,
         content = content
     )

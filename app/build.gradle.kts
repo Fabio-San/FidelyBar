@@ -14,8 +14,8 @@ android {
         applicationId = "com.card.fidelybar"
         minSdk = 28
         targetSdk = 37
-        versionCode = 10804
-        versionName = "1.8.4"
+        versionCode = 10805
+        versionName = "1.8.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
