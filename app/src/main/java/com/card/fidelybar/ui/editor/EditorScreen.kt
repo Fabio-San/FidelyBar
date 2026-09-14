@@ -1092,7 +1092,7 @@ private fun StorePickerSection(
                     OutlinedTextField(
                         value = query,
                         onValueChange = onQueryChange,
-                        placeholder = { Text("Cerca negozio…") },
+                        placeholder = { Text("Cerca tra ${StoreCatalog.all.size} locali...") },
                         leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                         singleLine = true,
                         shape = RoundedCornerShape(16.dp),
