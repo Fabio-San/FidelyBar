@@ -1,19 +1,15 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
--->
+<?xml version="1.0" encoding="utf-8"?>
 <data-extraction-rules>
+    <!-- Il file delle carte è criptato con chiave legata al Keystore del dispositivo:
+         escluso dal backup cloud e dal trasferimento device-to-device (inutile copiarlo,
+         non sarebbe leggibile su un altro telefono). Per spostare le carte su un nuovo
+         dispositivo usa "Backup e ripristino" → export con password. -->
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <exclude domain="file" path="fidelybar_cards.json"/>
+        <exclude domain="file" path="logos/"/>
+        <exclude domain="sharedpref" path="fidelybar_settings.xml"/>
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <exclude domain="file" path="fidelybar_cards.json"/>
     </device-transfer>
-    -->
 </data-extraction-rules>

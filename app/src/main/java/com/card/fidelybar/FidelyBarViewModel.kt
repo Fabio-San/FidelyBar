@@ -48,7 +48,9 @@ class FidelyBarViewModel(app: Application) : AndroidViewModel(app) {
         primaryHex: String,
         secondaryHex: String,
         monogram: Char,
-        logoUrl: String?
+        logoUrl: String?,
+        logoBorderWhite: Boolean = false,
+        logoBorderSize: Int = 1
     ): UserCard {
         val now = System.currentTimeMillis()
         val card = UserCard(
@@ -61,6 +63,8 @@ class FidelyBarViewModel(app: Application) : AndroidViewModel(app) {
             secondaryColorHex = secondaryHex,
             monogram = monogram,
             logoUrl = logoUrl,
+            logoBorderWhite = logoBorderWhite,
+            logoBorderSize = logoBorderSize,
             sortOrder = now.toInt(),
             createdAt = now,
             updatedAt = now

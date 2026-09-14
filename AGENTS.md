@@ -25,4 +25,8 @@ in `app/build.gradle.kts` (il versionCode deve sempre aumentare).
 ## App
 - Wallet carte fedeltà offline-first. Niente Room: persistenza JSON in
   `fidelybar_cards.json` via `CardFileStore` + `StateFlow` nel ViewModel.
-- Kotlin 2.4.10, AGP 9.4.0, Compose BOM 2026.02.01, coil3 (SingletonImageLoader.Factory).
+- Navigazione in-schermata (nessun NavHost): overlay full-screen per il dettaglio
+  carta, `ModalBottomSheet` per editor/impostazioni. Vedi `ui/FidelyBarApp.kt`.
+- Kotlin 2.4.20, AGP 9.4.0, Compose BOM 2026.09.00, coil3 (SingletonImageLoader.Factory).
+- Il file `fidelybar_cards.json` è escluso dal backup cloud (privacy): mai riabilitarlo
+  rimuovendo gli `<exclude>` in `res/xml/backup_rules.xml` e `data_extraction_rules.xml`.

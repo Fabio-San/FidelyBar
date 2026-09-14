@@ -1,9 +1,16 @@
 package com.card.fidelybar.ui.home
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -21,6 +28,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
@@ -39,6 +49,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,17 +66,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.toColorInt
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.card.fidelybar.FidelyBarViewModel
+import com.card.fidelybar.data.AppSettings
 import com.card.fidelybar.data.UserCard
 import com.card.fidelybar.ui.components.CardVisual
-import com.card.fidelybar.ui.components.LogoOrMonogram
+import com.card.fidelybar.ui.components.foregroundFor
+import com.card.fidelybar.ui.components.rememberColor
+import com.card.fidelybar.ui.theme.FidelyBackgroundBrush
 
 @Composable
 fun HomeScreen(
     viewModel: FidelyBarViewModel,
-    onOpenCard: (String) -> Unit,
+    onOpenCard: (String, Rect?) -> Unit,
     onAddCard: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
@@ -75,6 +88,12 @@ fun HomeScreen(
     }
     var showCredits by remember { mutableStateOf(false) }
     var isListView by rememberSaveable { mutableStateOf(false) }
+    val cardBounds = remember { HashMap<String, Rect>() }
+
+    val accentHex by AppSettings.accentHex.collectAsState()
+    val accentBase = accentHex?.let { rememberColor(it) }
+    val fabColor = accentBase ?: MaterialTheme.colorScheme.primaryContainer
+    val fabContentColor = foregroundFor(fabColor)
 
     if (showCredits) {
         AlertDialog(
@@ -112,17 +131,18 @@ fun HomeScreen(
                 val fabContainer by animateColorAsState(
                     targetValue = if (fabPressed)
                         lerp(
-                            MaterialTheme.colorScheme.primaryContainer,
+                            fabColor,
                             MaterialTheme.colorScheme.primary,
                             0.25f
                         )
-                    else MaterialTheme.colorScheme.primaryContainer,
+                    else fabColor,
                     label = "fabContainer"
                 )
                 ExtendedFloatingActionButton(
                     onClick = onAddCard,
                     interactionSource = fabSource,
                     containerColor = fabContainer,
+                    contentColor = fabContentColor,
                     icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                     text = { Text("Nuova carta") },
                     shape = RoundedCornerShape(28.dp),
@@ -137,14 +157,7 @@ fun HomeScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            MaterialTheme.colorScheme.background
-                        )
-                    )
-                )
+                .background(FidelyBackgroundBrush())
         ) {
             if (cards.isEmpty()) {
                 EmptyHome(
@@ -175,45 +188,55 @@ fun HomeScreen(
                         )
                     }
 
-                    if (isListView) {
-                        items(orderedCards.chunked(2), key = { it.joinToString("") { c -> c.id } }) { row ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 20.dp, vertical = 5.dp),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                row.forEach { card ->
-                                    CardListItem(
-                                        card = card,
-                                        modifier = Modifier.weight(1f),
-                                        onClick = { onOpenCard(card.id) }
-                                    )
-                                }
-                                if (row.size == 1) {
-                                    Spacer(Modifier.weight(1f))
+                    items(orderedCards.chunked(2), key = { it.joinToString("") { c -> c.id } }) { row ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 5.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            row.forEach { card ->
+                                Box(modifier = Modifier.weight(1f)) {
+                                    AnimatedContent(
+                                        targetState = isListView,
+                                        transitionSpec = {
+                                            (fadeIn(tween(300)) +
+                                                scaleIn(initialScale = 0.94f, animationSpec = tween(300)))
+                                                .togetherWith(
+                                                    fadeOut(tween(150)) +
+                                                        scaleOut(targetScale = 0.97f, animationSpec = tween(150))
+                                                )
+                                        },
+                                        label = "viewMorph"
+                                    ) { list ->
+                                        if (list) {
+                                            CardListItem(
+                                                card = card,
+                                                modifier = Modifier.fillMaxWidth(),
+                                                onBounds = { rect -> cardBounds[card.id] = rect },
+                                                onClick = { onOpenCard(card.id, cardBounds[card.id]) }
+                                            )
+                                        } else {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(96.dp)
+                                            ) {
+                                                CardVisual(
+                                                    card = card,
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .onGloballyPositioned { cardBounds[card.id] = it.boundsInWindow() },
+                                                    compact = true,
+                                                    onClick = { onOpenCard(card.id, cardBounds[card.id]) }
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                             }
-                        }
-                    } else {
-                        items(orderedCards.chunked(2), key = { it.joinToString("") { c -> c.id } }) { row ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 20.dp, vertical = 6.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                row.forEach { card ->
-                                    CardVisual(
-                                        card = card,
-                                        modifier = Modifier.weight(1f),
-                                        compact = true,
-                                        onClick = { onOpenCard(card.id) }
-                                    )
-                                }
-                                if (row.size == 1) {
-                                    Spacer(Modifier.weight(1f))
-                                }
+                            if (row.size == 1) {
+                                Spacer(Modifier.weight(1f))
                             }
                         }
                     }
@@ -231,21 +254,21 @@ private fun HomeHeader(onCredits: () -> Unit, onOpenSettings: () -> Unit, modifi
                 text = "FidelyBar",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(Modifier.weight(1f))
             IconButton(onClick = onCredits) {
                 Icon(
                     imageVector = Icons.Outlined.Info,
                     contentDescription = "Crediti",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
                 )
             }
             IconButton(onClick = onOpenSettings) {
                 Icon(
                     imageVector = Icons.Filled.Settings,
                     contentDescription = "Impostazioni",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
                 )
             }
         }
@@ -253,7 +276,7 @@ private fun HomeHeader(onCredits: () -> Unit, onOpenSettings: () -> Unit, modifi
         Text(
             text = "Le tue carte, sempre con te",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -291,39 +314,34 @@ private fun SectionHeader(
 private fun CardListItem(
     card: UserCard,
     modifier: Modifier = Modifier,
+    onBounds: (Rect) -> Unit,
     onClick: () -> Unit
 ) {
-    val accent = remember(card.primaryColorHex) {
-        Color(card.primaryColorHex.toColorInt())
-    }
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 1.dp,
-        modifier = modifier
+        color = Color.Transparent,
+        modifier = modifier.onGloballyPositioned { onBounds(it.boundsInWindow()) }
     ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        val primary = rememberColor(card.primaryColorHex)
+        val secondary = rememberColor(card.secondaryColorHex)
+        val contentColor = foregroundFor(primary)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Brush.linearGradient(listOf(primary, secondary)))
+                .clip(RoundedCornerShape(16.dp))
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            contentAlignment = Alignment.Center
         ) {
-            LogoOrMonogram(
-                monogram = card.monogram,
-                logoUrl = card.logoUrl,
-                containerColor = accent,
-                contentColor = Color.White,
-                size = 40,
-                logoKey = card.presetId
-            )
             Text(
                 text = card.title,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = contentColor,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
+                textAlign = TextAlign.Center
             )
         }
     }
@@ -347,7 +365,7 @@ private fun EmptyHome(
                 .clip(RoundedCornerShape(28.dp))
                 .background(
                     Brush.linearGradient(
-                        listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
+                        listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer)
                     )
                 ),
             contentAlignment = Alignment.Center

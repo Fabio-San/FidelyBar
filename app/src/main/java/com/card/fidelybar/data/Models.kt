@@ -22,7 +22,8 @@ data class StorePreset(
     val secondaryColorHex: String,
     val monogram: Char,
     val logoUrl: String? = null,
-    val hintDigits: Int? = null
+    val hintDigits: Int? = null,
+    val searchAliases: List<String> = emptyList()
 ) {
     companion object {
         const val CUSTOM = "custom"
@@ -41,6 +42,8 @@ data class UserCard(
     val monogram: Char = 'Φ',
     val logoUrl: String? = null,
     val isFavorite: Boolean = false,
+    val logoBorderWhite: Boolean = false,
+    val logoBorderSize: Int = 1,
     val sortOrder: Int = 0,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
