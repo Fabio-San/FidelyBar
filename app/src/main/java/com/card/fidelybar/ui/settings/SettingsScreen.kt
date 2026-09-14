@@ -1,6 +1,11 @@
 package com.card.fidelybar.ui.settings
 
 import android.content.Intent
+import androidx.core.graphics.toColorInt
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import kotlin.math.roundToInt
 import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -730,24 +735,51 @@ private fun AppearanceContent(
     }
 }
 
-private val accentChoices = listOf(
-    "#006C4C" to "Verde",
-    "#0E7C61" to "Smeraldo",
-    "#0891B2" to "Ciano",
-    "#3B82F6" to "Blu",
-    "#5B5BD6" to "Indaco",
-    "#7C3AED" to "Viola",
-    "#DB2777" to "Rosa",
-    "#DC2626" to "Rosso",
-    "#EA580C" to "Arancione",
-    "#EAB308" to "Oro",
-    "#64748B" to "Ardesia",
-    "#0F172A" to "Notte"
+data class ColorChoice(val primary: String, val secondary: String, val label: String)
+
+private val customPalette = listOf(
+    ColorChoice("#5B5BD6", "#3D3DA8", "Indaco"),
+    ColorChoice("#6366F1", "#4648D8", "Iris"),
+    ColorChoice("#3B82F6", "#2563EB", "Blu"),
+    ColorChoice("#0891B2", "#0E7490", "Ciano"),
+    ColorChoice("#0E7C61", "#0A5C49", "Verde"),
+    ColorChoice("#10B981", "#059669", "Smeraldo"),
+    ColorChoice("#84CC16", "#65A30D", "Lime"),
+    ColorChoice("#EAB308", "#CA8A04", "Oro"),
+    ColorChoice("#F59E0B", "#D97706", "Ambra"),
+    ColorChoice("#F97316", "#EA580C", "Arancione"),
+    ColorChoice("#E05A47", "#B84332", "Corallo"),
+    ColorChoice("#EF4444", "#DC2626", "Rosso"),
+    ColorChoice("#F43F5E", "#E11D48", "Cremisi"),
+    ColorChoice("#EC4899", "#DB2777", "Rosa"),
+    ColorChoice("#DB2777", "#BE185D", "Fucsia"),
+    ColorChoice("#A855F7", "#9333EA", "Viola"),
+    ColorChoice("#8B5CF6", "#6D28D9", "Iris scuro"),
+    ColorChoice("#4C1D95", "#3B0A72", "Borgogna"),
+    ColorChoice("#64748B", "#475569", "Ardesia"),
+    ColorChoice("#78716C", "#57534E", "Pietra"),
+    ColorChoice("#7C2D12", "#5B1F0A", "Cioccolato"),
+    ColorChoice("#14532D", "#0E3A20", "Foresta"),
+    ColorChoice("#0C4A6E", "#082F49", "Oceano"),
+    ColorChoice("#111827", "#030712", "Notte")
 )
+
+private fun hexColor(color: Int) = "#%06X".format(color and 0x00FFFFFF)
+
+private val shadeFactors = listOf(0.42f, 0.58f, 0.74f, 0.88f, 1f, 1.14f, 1.32f)
+
+private fun gradientFor(base: Int, shade: Float, intensity: Float, darkToLight: Boolean): Pair<String, String> {
+    val v = com.card.fidelybar.ui.components.LogoPalette.scaled(base, shade)
+    val primary = com.card.fidelybar.ui.components.LogoPalette.scaled(v, if (darkToLight) intensity * 0.85f else intensity)
+    val secondary = com.card.fidelybar.ui.components.LogoPalette.scaled(v, if (darkToLight) intensity * 1.15f else intensity * 0.62f)
+    return hexColor(primary) to hexColor(secondary)
+}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AccentSelector(selected: String?, onSelect: (String?) -> Unit) {
+    var shadeBase by remember { mutableStateOf<ColorChoice?>(null) }
+
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -758,14 +790,182 @@ private fun AccentSelector(selected: String?, onSelect: (String?) -> Unit) {
             label = "Auto",
             onClick = { onSelect(null) }
         )
-        accentChoices.forEach { (hex, label) ->
-            val color = rememberColor(hex)
+        customPalette.forEach { choice ->
+            val color = rememberColor(choice.primary)
+            val isSel = selected == choice.primary
             AccentDot(
-                selected = selected == hex,
+                selected = isSel,
                 color = color,
-                label = label,
-                onClick = { onSelect(hex) }
+                label = choice.label,
+                onClick = { shadeBase = choice }
             )
+        }
+    }
+
+    shadeBase?.let { base ->
+        ColorShadeDialog(
+            base = base,
+            onConfirm = { choice ->
+                onSelect(choice.primary)
+                shadeBase = null
+            },
+            onDismiss = { shadeBase = null }
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ColorShadeDialog(
+    base: ColorChoice,
+    onConfirm: (ColorChoice) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var shade by remember { mutableStateOf(1f) }
+    var intensity by remember { mutableStateOf(1f) }
+    var darkToLight by remember { mutableStateOf(false) }
+
+    val (tonePrimary, toneSecondary) = gradientFor(base.primary.toColorInt(), shade, intensity, darkToLight)
+
+    androidx.compose.ui.window.Dialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            AnimatedVisibility(
+                visible = true,
+                enter = slideInVertically(spring(dampingRatio = 0.8f, stiffness = 900f)) { it } + fadeIn(spring(dampingRatio = 0.8f, stiffness = 900f)),
+                label = "shadeDialog"
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 24.dp)
+                ) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "Tonalità di ${base.label}",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "Scegli la sfumatura, regola l'intensità e controlla subito l'anteprima.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(20.dp))
+                    CardPreview()
+                    Spacer(Modifier.height(24.dp))
+                    Text(
+                        "Sfumature",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        shadeFactors.forEach { factor ->
+                            val variant = com.card.fidelybar.ui.components.LogoPalette.scaled(base.primary.toColorInt(), factor)
+                            val isSel = kotlin.math.abs(shade - factor) < 0.01f
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(androidx.compose.foundation.shape.CircleShape)
+                                    .background(Color(variant))
+                                    .border(
+                                        width = if (isSel) 3.dp else 0.dp,
+                                        color = if (isSel) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                        shape = androidx.compose.foundation.shape.CircleShape
+                                    )
+                                    .clickable { shade = factor },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isSel) {
+                                    Icon(
+                                        Icons.Filled.Check,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(24.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "Intensità",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(Modifier.weight(1f))
+                        Text(
+                            "${(intensity * 100).roundToInt()}%",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    androidx.compose.material3.Slider(
+                        value = intensity,
+                        onValueChange = { intensity = it },
+                        valueRange = 0.5f..1.6f,
+                        steps = 10
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        androidx.compose.material3.Checkbox(
+                            checked = darkToLight,
+                            onCheckedChange = { darkToLight = it }
+                        )
+                        Column {
+                            Text(
+                                "Scuro → più chiaro",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                "Gradiente come i colori suggeriti",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Spacer(Modifier.weight(1f))
+                    Spacer(Modifier.height(16.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedButton(
+                            onClick = onDismiss,
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(52.dp)
+                        ) {
+                            Text("Annulla", style = MaterialTheme.typography.titleMedium)
+                        }
+                        Button(
+                            onClick = {
+                                onConfirm(ColorChoice(tonePrimary, toneSecondary, base.label))
+                            },
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(52.dp)
+                        ) {
+                            Text("Conferma", style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
+                    Spacer(Modifier.height(16.dp))
+                }
+            }
         }
     }
 }
