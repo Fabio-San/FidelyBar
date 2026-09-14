@@ -838,7 +838,7 @@ private fun CodeStepContent(
             Text(
                 text = it,
                 style = MaterialTheme.typography.bodySmall,
-                color = if (scanStatus?.contains("Lettura") == true) MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (scanStatus.contains("Lettura") == true) MaterialTheme.colorScheme.onSurfaceVariant
                 else MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(horizontal = 4.dp)
             )
