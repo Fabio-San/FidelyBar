@@ -380,7 +380,7 @@ fun EditorScreen(
         }
     }
 
-    val fallbackTitle = if (isCustom) "Su misura" else StoreCatalog.byId[presetId]?.name ?: "Su misura"
+    val fallbackTitle = if (isCustom) "Personalizzata" else StoreCatalog.byId[presetId]?.name ?: "Personalizzata"
     val previewCard = UserCard(
         id = "preview",
         presetId = if (isCustom) null else presetId,
@@ -1105,7 +1105,7 @@ private fun StorePickerSection(
                 val featuredIds = listOf("conad", "coop", "eurospin", "trony", "crai", "md", "cfadda")
                 if (q.isEmpty()) {
                     Text(
-                        text = "Più gettonati",
+                        text = "Più richieste",
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
@@ -1117,9 +1117,9 @@ private fun StorePickerSection(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (q.isEmpty() || "su misura".contains(q)) {
+                    if (q.isEmpty() || "personalizzata".contains(q) || "su misura".contains(q)) {
                         StoreChip(
-                            label = "Su misura",
+                            label = "Personalizzata",
                             monogram = 'Φ',
                             primaryHex = customPalettePrimary,
                             selected = false,
