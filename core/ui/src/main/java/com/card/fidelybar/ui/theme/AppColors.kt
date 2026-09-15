@@ -14,7 +14,7 @@ internal fun parseHexColor(hex: String): Color {
     }
 }
 
-internal fun accentTone(accent: Color, lightness: Float): Color {
+fun accentTone(accent: Color, lightness: Float): Color {
     val hsl = FloatArray(3)
     ColorUtils.colorToHSL(accent.toArgb(), hsl)
     return Color(ColorUtils.HSLToColor(floatArrayOf(hsl[0], hsl[1], lightness.coerceIn(0f, 1f))))

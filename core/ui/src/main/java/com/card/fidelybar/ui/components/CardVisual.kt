@@ -64,7 +64,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 
 @Composable
-internal fun rememberColor(hex: String): Color {
+fun rememberColor(hex: String): Color {
     return remember(hex) {
         val cleaned = hex.removePrefix("#")
         val value = cleaned.toLong(16)
@@ -76,7 +76,7 @@ internal fun rememberColor(hex: String): Color {
     }
 }
 
-internal fun foregroundFor(background: Color): Color {
+fun foregroundFor(background: Color): Color {
     val luma = background.luminance()
     val onDark = Color.White
     val onLight = Color(0xFF1B1C1E)
@@ -354,7 +354,8 @@ fun CardVisual(
     val context = LocalContext.current
     val density = LocalDensity.current.density
     val hasLogo = remember(card.presetId, card.logoUrl) {
-        card.logoUrl != null || (card.presetId != null && LogoBitmapCache.resId(context, card.presetId) != 0)
+        val pid = card.presetId
+        card.logoUrl != null || (pid != null && LogoBitmapCache.resId(context, pid) != 0)
     }
     val heroEstDp = when {
         dense -> 220f

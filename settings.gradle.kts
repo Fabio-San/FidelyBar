@@ -24,4 +24,15 @@ dependencyResolutionManagement {
 
 rootProject.name = "FidelyBar"
 include(":app")
+include(":core:model")
+include(":core:crypto")
+include(":core:barcode")
+include(":core:data")
+include(":core:ui")
+include(":core:viewmodel")
+include(":feature:home")
+include(":feature:editor")
+include(":feature:settings")
+include(":feature:detail")
+include(":feature:onboarding")
  

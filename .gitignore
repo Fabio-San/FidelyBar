@@ -3,13 +3,13 @@
 /local.properties
 /.idea
 .DS_Store
-/build
 /captures
 .externalNativeBuild
 .cxx
 /.kotlin
 local.properties
-/app/build
+build/
+app/build
 /app/release
 *.apk
 *.aab

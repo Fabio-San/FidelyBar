@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -14,8 +13,8 @@ android {
         applicationId = "com.card.fidelybar"
         minSdk = 28
         targetSdk = 37
-        versionCode = 11011
-        versionName = "1.10.11"
+        versionCode = 11012
+        versionName = "1.10.12"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -37,6 +36,17 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:model"))
+    implementation(project(":core:crypto"))
+    implementation(project(":core:barcode"))
+    implementation(project(":core:data"))
+    implementation(project(":core:ui"))
+    implementation(project(":core:viewmodel"))
+    implementation(project(":feature:home"))
+    implementation(project(":feature:editor"))
+    implementation(project(":feature:settings"))
+    implementation(project(":feature:detail"))
+    implementation(project(":feature:onboarding"))
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
@@ -46,18 +56,11 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.zxing.core)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
-    implementation(libs.androidx.camera.core)
-    implementation(libs.androidx.camera.camera2)
-    implementation(libs.androidx.camera.lifecycle)
-    implementation(libs.androidx.camera.view)
-    implementation(libs.mlkit.barcode)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

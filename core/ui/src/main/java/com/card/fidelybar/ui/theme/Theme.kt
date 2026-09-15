@@ -27,7 +27,7 @@ import com.card.fidelybar.data.ThemeMode
 val LocalDarkTheme = staticCompositionLocalOf { false }
 
 internal val LocalStatusBarTint = staticCompositionLocalOf { false }
-internal val LocalAccentContainer = staticCompositionLocalOf { Color.Unspecified }
+val LocalAccentContainer = staticCompositionLocalOf { Color.Unspecified }
 
 @Composable
 fun FidelyBackgroundBrush(): Brush {
