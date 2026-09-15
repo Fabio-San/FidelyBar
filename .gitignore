@@ -7,9 +7,12 @@
 /captures
 .externalNativeBuild
 .cxx
+/.kotlin
 local.properties
 /app/build
 /app/release
 *.apk
 *.aab
 FIDELYBAR_NOTES.md
+loghi_da_sistemare/
+*.fid
