@@ -4,7 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.card.fidelybar.data.BarcodeFormatType
-import com.card.fidelybar.data.CardFileStore
+import com.card.fidelybar.data.CardRepository
+import com.card.fidelybar.data.CardRepositoryImpl
 import com.card.fidelybar.data.LogoCache
 import com.card.fidelybar.data.StoreCatalog
 import com.card.fidelybar.data.StorePreset
@@ -18,7 +19,7 @@ import java.util.UUID
 
 class FidelyBarViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val store = CardFileStore(app)
+    private val repository: CardRepository = CardRepositoryImpl.create(app)
 
     private val _cards = MutableStateFlow<List<UserCard>>(emptyList())
     val cards = _cards.asStateFlow()
@@ -26,7 +27,7 @@ class FidelyBarViewModel(app: Application) : AndroidViewModel(app) {
     val presets: List<StorePreset> = StoreCatalog.all
 
     init {
-        _cards.value = store.load()
+        _cards.value = repository.load()
         prefetchLogos()
     }
 
@@ -101,7 +102,7 @@ class FidelyBarViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun exportJson(): String? =
-        if (_cards.value.isEmpty()) null else store.encodeCards(_cards.value)
+        if (_cards.value.isEmpty()) null else repository.encodeCards(_cards.value)
 
     fun importCards(cards: List<UserCard>) {
         _cards.value = cards
@@ -116,7 +117,7 @@ class FidelyBarViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun persist() {
         viewModelScope.launch(Dispatchers.IO) {
-            store.save(_cards.value)
+            repository.save(_cards.value)
         }
     }
 }

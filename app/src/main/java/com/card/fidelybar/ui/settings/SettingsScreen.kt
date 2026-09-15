@@ -67,7 +67,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.card.fidelybar.FidelyBarViewModel
 import com.card.fidelybar.data.AppSettings
 import com.card.fidelybar.data.CardCrypto
-import com.card.fidelybar.data.CardFileStore
+import com.card.fidelybar.data.CardRepositoryImpl
 import com.card.fidelybar.ui.theme.FidelyBackgroundBrush
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -103,7 +103,7 @@ fun SettingsScreen(
     onShowTutorial: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
-    val store = remember { CardFileStore(context) }
+    val store = remember { CardRepositoryImpl.create(context) }
     val themeMode by AppSettings.themeMode.collectAsState()
     val fontScale by AppSettings.fontScale.collectAsState()
     val accentHex by AppSettings.accentHex.collectAsState()
