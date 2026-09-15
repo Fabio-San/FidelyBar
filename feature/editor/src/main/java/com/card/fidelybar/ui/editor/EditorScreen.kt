@@ -87,6 +87,7 @@ import com.card.fidelybar.ui.components.CardCodeView
 import com.card.fidelybar.ui.components.CardVisual
 import com.card.fidelybar.ui.components.LogoPalette
 import com.card.fidelybar.ui.components.customPalette
+import com.card.fidelybar.ui.components.rememberImeVisible
 import com.card.fidelybar.ui.theme.FidelyBackgroundBrush
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -321,7 +322,14 @@ fun EditorScreen(
     }
 
         var isSearchFocused by remember { mutableStateOf(false) }
-        val isImmersiveSearch = step == 0 && (isSearchFocused || query.isNotBlank())
+        val imeVisible = rememberImeVisible().value
+        val isImmersiveSearch = step == 0 && imeVisible && (isSearchFocused || query.isNotBlank())
+
+        // Uscendo dalla ricerca immersiva (tastiera chiusa o query azzerata) torna
+        // in cima così l'anteprima della carta e lo stepper sono di nuovo visibili.
+        LaunchedEffect(isImmersiveSearch) {
+            if (!isImmersiveSearch) editorScroll.animateScrollTo(0)
+        }
 
         Column(
             modifier = Modifier

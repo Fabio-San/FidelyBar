@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Variante notte dello splash per la modalità SYSTEM: lo sfondo scuro
+         coerente con DarkColorScheme.background. -->
+    <style name="Theme.FidelyBar.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background_dark</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.FidelyBar</item>
+    </style>
+</resources>

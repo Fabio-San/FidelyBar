@@ -1,5 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!-- Tema dell'app dopo lo splash: Compose si occupa di tutto il resto. -->
     <style name="Theme.FidelyBar" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- Splash screen (compatibile API < 31 grazie a core-splashscreen).
+         Lo sfondo segue il tema impostato: la base punta a splash_background_light
+         e MainActivity applica l'override scuro quando serve. -->
+    <style name="Theme.FidelyBar.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background_light</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.FidelyBar</item>
+    </style>
+
+    <!-- Variante scura forzata (tema DARK nelle impostazioni). -->
+    <style name="Theme.FidelyBar.Starting.Dark" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background_dark</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.FidelyBar</item>
+    </style>
 </resources>

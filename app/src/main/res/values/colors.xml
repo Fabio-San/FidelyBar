@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sfondo della schermata di avvio: coerente con colorScheme.background
+         del tema Compose (vedi Theme.kt: LightColorScheme/DarkColorScheme). -->
+    <color name="splash_background_light">#FBF9F4</color>
+    <color name="splash_background_dark">#111418</color>
+</resources>

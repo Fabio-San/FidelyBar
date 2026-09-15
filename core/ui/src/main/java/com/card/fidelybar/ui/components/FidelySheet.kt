@@ -6,6 +6,8 @@ import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -30,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 
@@ -124,12 +127,21 @@ fun FullScreenHost(
 
     val fadeInSpec: FiniteAnimationSpec<Float> = spring(dampingRatio = 0.8f, stiffness = 900f)
     val fadeOutSpec: FiniteAnimationSpec<Float> = spring(dampingRatio = 0.9f, stiffness = 620f)
+    val scaleSpec: FiniteAnimationSpec<Float> = spring(dampingRatio = 0.82f, stiffness = 360f)
 
     Box(modifier = Modifier.fillMaxSize()) {
         AnimatedVisibility(
             visible = visible,
-            enter = fadeIn(animationSpec = fadeInSpec),
-            exit = fadeOut(animationSpec = fadeOutSpec)
+            enter = (fadeIn(animationSpec = fadeInSpec) + scaleIn(
+                animationSpec = scaleSpec,
+                initialScale = 0.96f,
+                transformOrigin = TransformOrigin(0.5f, 0.5f)
+            )),
+            exit = (fadeOut(animationSpec = fadeOutSpec) + scaleOut(
+                animationSpec = scaleSpec,
+                targetScale = 0.97f,
+                transformOrigin = TransformOrigin(0.5f, 0.5f)
+            ))
         ) {
             Surface(
                 modifier = Modifier.fillMaxSize(),
