@@ -375,7 +375,10 @@ fun EditorScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(editorScroll)
+                .let {
+                    if (step == 2) it.verticalScroll(editorScroll)
+                    else it
+                }
                 .let { if (inSheet) it else it.navigationBarsPadding() }
                 .let { if (inSheet) it else it.imePadding() }
                 .padding(bottom = 100.dp)
