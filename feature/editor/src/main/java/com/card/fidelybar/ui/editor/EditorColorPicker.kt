@@ -228,8 +228,8 @@ internal fun ColorPickerScreen(
                             )
                             Spacer(Modifier.height(12.dp))
                             FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 logoChoices.forEach { choice ->
                                     val isRecommended = choice == recommendedChoice
@@ -237,7 +237,6 @@ internal fun ColorPickerScreen(
                                         Swatch(
                                             choice = choice,
                                             selected = shadeBase?.primary == choice.primary,
-                                            size = 42,
                                             onClick = { shadeBase = choice }
                                         )
                                         if (isRecommended && shadeBase?.primary != choice.primary) {
@@ -261,14 +260,13 @@ internal fun ColorPickerScreen(
                         )
                         Spacer(Modifier.height(12.dp))
                         FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             customPalette.forEach { choice ->
                                 Swatch(
                                     choice = choice,
                                     selected = shadeBase?.primary == choice.primary,
-                                    size = 42,
                                     onClick = { shadeBase = choice }
                                 )
                             }

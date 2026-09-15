@@ -3,11 +3,10 @@ package com.card.fidelybar.ui.components
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -28,13 +27,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
 /**
  * Bottom sheet "Wallet" su misura, con la stessa identica molla in ingresso e
@@ -116,6 +118,11 @@ fun FidelySheet(
  * e uscita del resto dell'app. Niente barra pull-up, niente angoli: le schermate
  * interne (Editor, Impostazioni) occupano tutto il display e gestiscono i propri
  * padding per status/navigation bar.
+ *
+ * Il contenuto resta sempre composto e disegnato (pre-riscaldamento): al primo
+ * tocco su "Nuova carta" o Impostazioni la schermata è già pronta, niente lag da
+ * cold-start. Quando chiusa, alpha va a 0 e translationY spinge il layer fuori
+ * viewport così i tap passano a HomeScreen.
  */
 @Composable
 fun FullScreenHost(
@@ -129,29 +136,42 @@ fun FullScreenHost(
     val fadeOutSpec: FiniteAnimationSpec<Float> = spring(dampingRatio = 0.9f, stiffness = 620f)
     val scaleSpec: FiniteAnimationSpec<Float> = spring(dampingRatio = 0.82f, stiffness = 360f)
 
+    val alpha = remember { Animatable(0f) }
+    val scale = remember { Animatable(0.97f) }
+
+    LaunchedEffect(visible) {
+        if (visible) {
+            launch { alpha.animateTo(1f, fadeInSpec) }
+            scale.animateTo(1f, scaleSpec)
+        } else {
+            launch { alpha.animateTo(0f, fadeOutSpec) }
+            scale.animateTo(0.97f, scaleSpec)
+        }
+    }
+
+    // Il contenuto resta sempre composto e disegnato, ma a schermo chiuso alpha
+    // va a 0 e translationY spinge il layer fuori viewport: i tap passano così a
+    // HomeScreen senza smontare (pre-riscaldamento) né ricomporre a ogni frame.
     Box(modifier = Modifier.fillMaxSize()) {
-        AnimatedVisibility(
-            visible = visible,
-            enter = (fadeIn(animationSpec = fadeInSpec) + scaleIn(
-                animationSpec = scaleSpec,
-                initialScale = 0.96f,
-                transformOrigin = TransformOrigin(0.5f, 0.5f)
-            )),
-            exit = (fadeOut(animationSpec = fadeOutSpec) + scaleOut(
-                animationSpec = scaleSpec,
-                targetScale = 0.97f,
-                transformOrigin = TransformOrigin(0.5f, 0.5f)
-            ))
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    this.alpha = alpha.value
+                    val s = scale.value
+                    scaleX = s
+                    scaleY = s
+                    transformOrigin = TransformOrigin(0.5f, 0.5f)
+                    if (alpha.value < 0.01f) {
+                        translationY = 200000f
+                    } else {
+                        translationY = 0f
+                    }
+                },
+            color = MaterialTheme.colorScheme.surface
         ) {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.surface
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    content()
-                }
+            Column(modifier = Modifier.fillMaxSize()) {
+                content()
             }
         }
     }

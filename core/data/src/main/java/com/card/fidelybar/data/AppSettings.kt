@@ -59,7 +59,7 @@ object AppSettings {
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         _themeMode.value = ThemeMode.fromKey(prefs.getString(KEY_THEME, ThemeMode.SYSTEM.key))
         _fontScale.value = FontScale.fromKey(prefs.getString(KEY_FONT_SCALE, FontScale.NORMAL.key))
-        _accentHex.value = prefs.getString(KEY_ACCENT, "#757575")
+        _accentHex.value = prefs.getString(KEY_ACCENT, "#64748B")
         _statusBarTint.value = prefs.getBoolean(KEY_STATUS_BAR_TINT, true)
         _hasSeenOnboarding.value = prefs.getBoolean(KEY_HAS_SEEN_ONBOARDING, false)
     }

@@ -22,7 +22,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -44,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -54,30 +55,42 @@ import kotlin.math.roundToInt
 data class ColorChoice(val primary: String, val secondary: String, val label: String)
 
 val customPalette = listOf(
-    ColorChoice("#5B5BD6", "#3D3DA8", "Indaco"),
-    ColorChoice("#6366F1", "#4648D8", "Iris"),
-    ColorChoice("#3B82F6", "#2563EB", "Blu"),
-    ColorChoice("#0891B2", "#0E7490", "Ciano"),
-    ColorChoice("#0E7C61", "#0A5C49", "Verde"),
-    ColorChoice("#10B981", "#059669", "Smeraldo"),
-    ColorChoice("#84CC16", "#65A30D", "Lime"),
-    ColorChoice("#EAB308", "#CA8A04", "Oro"),
-    ColorChoice("#F59E0B", "#D97706", "Ambra"),
-    ColorChoice("#F97316", "#EA580C", "Arancione"),
-    ColorChoice("#E05A47", "#B84332", "Corallo"),
     ColorChoice("#EF4444", "#DC2626", "Rosso"),
     ColorChoice("#F43F5E", "#E11D48", "Cremisi"),
     ColorChoice("#EC4899", "#DB2777", "Rosa"),
     ColorChoice("#DB2777", "#BE185D", "Fucsia"),
-    ColorChoice("#A855F7", "#9333EA", "Viola"),
-    ColorChoice("#8B5CF6", "#6D28D9", "Iris scuro"),
+    ColorChoice("#F97316", "#EA580C", "Arancione"),
+    ColorChoice("#EAB308", "#CA8A04", "Oro"),
+    ColorChoice("#F59E0B", "#D97706", "Ambra"),
+    ColorChoice("#84CC16", "#65A30D", "Lime"),
+    ColorChoice("#0E7C61", "#0A5C49", "Verde"),
+    ColorChoice("#10B981", "#059669", "Smeraldo"),
+    ColorChoice("#0891B2", "#0E7490", "Ciano"),
+    ColorChoice("#3B82F6", "#2563EB", "Blu"),
+    ColorChoice("#6366F1", "#4648D8", "Iris"),
+    ColorChoice("#5B5BD6", "#3D3DA8", "Indaco"),
+    ColorChoice("#8B5CF6", "#6D28D9", "Viola"),
+    ColorChoice("#A855F7", "#9333EA", "Viola chiaro"),
     ColorChoice("#4C1D95", "#3B0A72", "Borgogna"),
-    ColorChoice("#64748B", "#475569", "Ardesia"),
-    ColorChoice("#78716C", "#57534E", "Pietra"),
+    ColorChoice("#E05A47", "#B84332", "Corallo"),
     ColorChoice("#7C2D12", "#5B1F0A", "Cioccolato"),
     ColorChoice("#14532D", "#0E3A20", "Foresta"),
     ColorChoice("#0C4A6E", "#082F49", "Oceano"),
+    ColorChoice("#64748B", "#475569", "Ardesia"),
+    ColorChoice("#78716C", "#57534E", "Pietra"),
     ColorChoice("#111827", "#030712", "Notte")
+)
+
+val basePalette = listOf(
+    ColorChoice("#EF4444", "#DC2626", "Rosso"),
+    ColorChoice("#EAB308", "#CA8A04", "Giallo"),
+    ColorChoice("#0E7C61", "#0A5C49", "Verde"),
+    ColorChoice("#3B82F6", "#2563EB", "Blu"),
+    ColorChoice("#111827", "#030712", "Nero"),
+    ColorChoice("#64748B", "#475569", "Ardesia"),
+    ColorChoice("#8B5CF6", "#6D28D9", "Viola"),
+    ColorChoice("#F97316", "#EA580C", "Arancione"),
+    ColorChoice("#EC4899", "#DB2777", "Rosa")
 )
 
 fun hexColor(color: Int) = "#%06X".format(color and 0x00FFFFFF)
@@ -108,27 +121,41 @@ fun Swatch(
     onClick: () -> Unit
 ) {
     val color = Color(choice.primary.toColorInt())
-    Box(
-        modifier = Modifier
-            .size(size.dp)
-            .clip(CircleShape)
-            .background(color)
-            .border(
-                width = if (selected) 3.dp else 0.dp,
-                color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                shape = CircleShape
-            )
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
+    Column(
+        modifier = Modifier.width(64.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (selected) {
-            Icon(
-                Icons.Filled.Check,
-                contentDescription = choice.label,
-                tint = Color.White,
-                modifier = Modifier.size((size * 0.47f).dp)
-            )
+        Box(
+            modifier = Modifier
+                .size(size.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(color)
+                .border(
+                    width = if (selected) 3.dp else 1.dp,
+                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) {
+            if (selected) {
+                Icon(
+                    Icons.Filled.Check,
+                    contentDescription = choice.label,
+                    tint = foregroundFor(color),
+                    modifier = Modifier.size((size * 0.42f).dp)
+                )
+            }
         }
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = choice.label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.width(60.dp)
+        )
     }
 }
 
@@ -197,12 +224,12 @@ fun ColorShadeDialog(
                             Box(
                                 modifier = Modifier
                                     .size(40.dp)
-                                    .clip(CircleShape)
+                                    .clip(RoundedCornerShape(10.dp))
                                     .background(Color(variant))
                                     .border(
-                                        width = if (isSel) 3.dp else 0.dp,
-                                        color = if (isSel) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                        shape = CircleShape
+                                        width = if (isSel) 3.dp else 1.dp,
+                                        color = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                                        shape = RoundedCornerShape(10.dp)
                                     )
                                     .clickable { shade = factor },
                                 contentAlignment = Alignment.Center
@@ -211,7 +238,7 @@ fun ColorShadeDialog(
                                     Icon(
                                         Icons.Filled.Check,
                                         contentDescription = null,
-                                        tint = Color.White,
+                                        tint = foregroundFor(Color(variant)),
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
