@@ -44,7 +44,7 @@ data class UserCard(
     val isFavorite: Boolean = false,
     val logoBorderWhite: Boolean = false,
     val logoBorderSize: Int = 1,
-    val sortOrder: Int = 0,
+    val sortOrder: Long = 0L,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )

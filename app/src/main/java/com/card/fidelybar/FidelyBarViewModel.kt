@@ -65,7 +65,7 @@ class FidelyBarViewModel(app: Application) : AndroidViewModel(app) {
             logoUrl = logoUrl,
             logoBorderWhite = logoBorderWhite,
             logoBorderSize = logoBorderSize,
-            sortOrder = now.toInt(),
+            sortOrder = now,
             createdAt = now,
             updatedAt = now
         )
