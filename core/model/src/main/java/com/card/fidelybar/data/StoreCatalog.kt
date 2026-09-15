@@ -74,7 +74,9 @@ object StoreCatalog {
         StorePreset("yamamay", "Yamamay", BarcodeFormatType.EAN13, "#E6007A", "#B8005F", 'Y', hintDigits = 13),
         StorePreset("kiko", "Kiko Milano", BarcodeFormatType.EAN13, "#1A1A1A", "#000000", 'K', hintDigits = 13),
         StorePreset("rinascente", "Rinascente", BarcodeFormatType.EAN13, "#111111", "#000000", 'R', hintDigits = 13),
-        StorePreset("coin", "Coin", BarcodeFormatType.EAN13, "#00356B", "#002450", 'C', hintDigits = 13)
+        StorePreset("coin", "Coin", BarcodeFormatType.EAN13, "#00356B", "#002450", 'C', hintDigits = 13),
+        StorePreset("lafarmacia", "LaFarmacia.", BarcodeFormatType.EAN13, "#D81B1B", "#A50E0E", 'F', hintDigits = 13),
+        StorePreset("bdibimbi", "BdiBimbi", BarcodeFormatType.EAN13, "#38255C", "#2B1B47", 'B', hintDigits = 13)
     )
 
     val byId: Map<String, StorePreset> = all.associateBy { it.id }
