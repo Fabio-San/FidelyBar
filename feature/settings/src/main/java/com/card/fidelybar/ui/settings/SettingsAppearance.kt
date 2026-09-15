@@ -135,6 +135,7 @@ internal fun AppearanceContent(
                 logoBorderSize = 1
             ),
             onClick = {},
+            compact = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 12.dp)
@@ -158,7 +159,7 @@ internal fun AppearanceContent(
         FontScaleSegmentedRow(selected = fontScale, onSelect = onFontScaleChange)
         Spacer(Modifier.height(20.dp))
         Text(
-            text = "Colore accento",
+            text = "Colore",
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
@@ -202,7 +203,7 @@ internal fun AccentSelector(selected: String?, onSelect: (String?) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
 
     FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         basePalette.forEach { choice ->
@@ -221,7 +222,7 @@ internal fun AccentSelector(selected: String?, onSelect: (String?) -> Unit) {
         exit = shrinkVertically(spring(dampingRatio = 0.9f, stiffness = 500f)) + fadeOut()
     ) {
         FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.padding(top = 4.dp)
         ) {

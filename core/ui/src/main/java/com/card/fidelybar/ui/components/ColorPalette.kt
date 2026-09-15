@@ -44,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -108,8 +109,7 @@ fun buildLogoChoices(c: LogoColors): List<ColorChoice> {
     val p = c.primary
     return listOf(
         ColorChoice(hexColor(p), hexColor(c.secondary), "Dal logo"),
-        ColorChoice(hexColor(LogoPalette.scaled(p, 0.78f)), hexColor(LogoPalette.scaled(p, 1.18f)), "Dal logo scuro → chiaro"),
-        ColorChoice(hexColor(c.recommendedPrimary), hexColor(c.recommendedSecondary), "Base consigliata")
+        ColorChoice(hexColor(c.recommendedPrimary), hexColor(c.recommendedSecondary), "Base")
     )
 }
 
@@ -122,7 +122,7 @@ fun Swatch(
 ) {
     val color = Color(choice.primary.toColorInt())
     Column(
-        modifier = Modifier.width(64.dp),
+        modifier = Modifier.width(60.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
@@ -147,14 +147,15 @@ fun Swatch(
                 )
             }
         }
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(2.dp))
         Text(
             text = choice.label,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.width(60.dp)
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }

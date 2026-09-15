@@ -18,6 +18,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,6 +46,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
@@ -68,6 +70,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -298,6 +301,28 @@ fun EditorScreen(
         }
     }
 
+    fun resetNewCard() {
+        title = ""
+        number = ""
+        presetId = null
+        format = BarcodeFormatType.CODE_128
+        primaryHex = customPalette.first().primary
+        secondaryHex = customPalette.first().secondary
+        monogram = '\u03A6'
+        logoUrl = null
+        isCustomColor = true
+        logoBorderWhite = false
+        logoBorderSize = 1
+        query = ""
+        storeChosen = false
+        showFormatPicker = false
+        showColorPicker = false
+        showScanner = false
+        step = 0
+        saving = false
+        scanStatus = null
+    }
+
     val fallbackTitle = if (isCustom) "Personalizzata" else StoreCatalog.byId[presetId]?.name ?: "Personalizzata"
     val previewCard = UserCard(
         id = "preview",
@@ -490,25 +515,48 @@ fun EditorScreen(
                         step = 2
                     }
                 )
-                else -> Button(
-                    onClick = { save() },
-                    enabled = saveEnabled && !saving,
-                    shape = RoundedCornerShape(18.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp)
-                ) {
-                    if (saving) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(22.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.5.dp
-                        )
-                    } else {
-                        Text(
-                            if (editingCard != null) "Salva modifiche" else "Aggiungi carta",
-                            style = MaterialTheme.typography.titleMedium
-                        )
+                else -> Column {
+                    Button(
+                        onClick = { save() },
+                        enabled = saveEnabled && !saving,
+                        shape = RoundedCornerShape(18.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp)
+                    ) {
+                        if (saving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(22.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.5.dp
+                            )
+                        } else {
+                            Text(
+                                if (editingCard != null) "Salva modifiche" else "Aggiungi carta",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
+                    }
+                    if (editingCard == null) {
+                        Spacer(Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                resetNewCard()
+                                onBack()
+                            },
+                            enabled = !saving,
+                            shape = RoundedCornerShape(18.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = Color.Transparent,
+                                contentColor = MaterialTheme.colorScheme.error
+                            ),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(54.dp)
+                        ) {
+                            Text("Annulla", style = MaterialTheme.typography.titleMedium)
+                        }
                     }
                 }
             }

@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,6 +48,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -154,7 +156,7 @@ internal fun ColorPickerScreen(
         logoColors = LogoPalette.extract(context, presetId, logoUrl)
     }
     val logoChoices = remember(logoColors) { logoColors?.let { buildLogoChoices(it) }.orEmpty() }
-    val recommendedChoice = logoChoices.getOrNull(2)
+    val recommendedChoice = logoChoices.getOrNull(1)
 
     var shadeBase by remember { mutableStateOf<ColorChoice?>(null) }
 
@@ -228,12 +230,12 @@ internal fun ColorPickerScreen(
                             )
                             Spacer(Modifier.height(12.dp))
                             FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 logoChoices.forEach { choice ->
                                     val isRecommended = choice == recommendedChoice
-                                    Column {
+                                    Column(Modifier.width(60.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                                         Swatch(
                                             choice = choice,
                                             selected = shadeBase?.primary == choice.primary,
@@ -244,6 +246,7 @@ internal fun ColorPickerScreen(
                                                 "Consigliata",
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = MaterialTheme.colorScheme.primary,
+                                                textAlign = TextAlign.Center,
                                                 modifier = Modifier.padding(top = 4.dp)
                                             )
                                         }
@@ -260,7 +263,7 @@ internal fun ColorPickerScreen(
                         )
                         Spacer(Modifier.height(12.dp))
                         FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             customPalette.forEach { choice ->

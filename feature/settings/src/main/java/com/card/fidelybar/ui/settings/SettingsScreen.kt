@@ -234,10 +234,6 @@ fun SettingsScreen(
                         } else {
                             when (target) {
                                 SettingsSection.APPEARANCE -> {
-                                    SectionTitle(
-                                        title = "Aspetto",
-                                        modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 8.dp)
-                                    )
                                     SectionCard(modifier = Modifier.padding(start = 20.dp, end = 20.dp)) {
                                         AppearanceContent(
                                             themeMode = themeMode,

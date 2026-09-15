@@ -68,18 +68,11 @@ object LogoPalette {
     }
 
     private fun recommended(transparentBg: Boolean, c0: Int): Pair<Int, Int> {
-        if (transparentBg) {
-            // Logo senza sfondo: il colore dominante è quello del testo/glyph.
-            // Per non fonderlo con lo sfondo della carta si suggerisce un neutro
-            // con il massimo contrasto rispetto al colore del logo.
-            return if (luma(c0) < 150) {
-                0xFFE9EFF5.toInt() to 0xFFC3D0DE.toInt()
-            } else {
-                0xFF1F2A36.toInt() to 0xFF0E141B.toInt()
-            }
+        return if (luma(c0) < 128) {
+            0xFFE9EFF5.toInt() to 0xFFC3D0DE.toInt()
+        } else {
+            0xFF1F2A36.toInt() to 0xFF0E141B.toInt()
         }
-        val rec = darken(c0, 0.72f)
-        return rec to darken(rec, 0.78f)
     }
 
     private fun luma(c: Int): Int {
