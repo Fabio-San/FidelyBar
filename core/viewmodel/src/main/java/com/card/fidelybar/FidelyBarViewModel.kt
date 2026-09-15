@@ -33,6 +33,12 @@ class FidelyBarViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch(Dispatchers.IO) {
             val list = repository.load()
             _cards.value = list
+            
+            // Punto 1: Precarica la cache su disco dei loghi remoti per le prime 4 carte prima di rimuovere la splash screen
+            list.take(4).forEach { card ->
+                card.logoUrl?.let { LogoCache.ensure(getApplication(), it) }
+            }
+
             _isLoading.value = false
             prefetchLogos()
         }
