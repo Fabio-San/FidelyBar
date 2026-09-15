@@ -206,11 +206,10 @@ fun LogoOrMonogram(
         var localLogo by remember(logoKey, targetPx) {
             mutableStateOf(LogoBitmapCache.getCached(context, logoKey, targetPx))
         }
-        // Punto 1 alternativo/irrobustito: esegui il warm-up in RAM in anticipo non appena il composable viene inizializzato
         LaunchedEffect(logoKey, targetPx) {
-            if (localLogo == null && logoKey != null) {
+            if (localLogo == null) {
                 val decoded = withContext(LogoBitmapCache.decodeDispatcher) {
-                    LogoBitmapCache.get(context, logoKey, targetPx)
+                    if (logoKey == null) null else LogoBitmapCache.get(context, logoKey, targetPx)
                 }
                 if (decoded != null) localLogo = decoded
             }
@@ -263,7 +262,7 @@ fun LogoOrMonogram(
         }
         Crossfade(
             targetState = crossfadeState,
-            animationSpec = tween(durationMillis = 220),
+            animationSpec = tween(durationMillis = 120),
             label = "logoCrossfade",
             modifier = logoModifier
         ) { target ->
