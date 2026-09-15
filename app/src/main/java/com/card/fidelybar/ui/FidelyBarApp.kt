@@ -1,7 +1,6 @@
 package com.card.fidelybar.ui
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,7 +15,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.card.fidelybar.FidelyBarViewModel
-import com.card.fidelybar.ui.components.FidelySheet
+import com.card.fidelybar.ui.components.FullScreenHost
 import com.card.fidelybar.ui.detail.CardDetailScreen
 import com.card.fidelybar.ui.editor.EditorScreen
 import com.card.fidelybar.ui.home.HomeScreen
@@ -90,22 +89,23 @@ fun FidelyBarApp(viewModel: FidelyBarViewModel) {
             )
         }
 
-        // FidelySheet sempre composta (anche da chiusa): pre-riscalda Editor e
-        // Impostazioni e, all'uscita, anima via con la stessa molla dell'ingresso.
-        FidelySheet(visible = editor != null, onDismiss = { dismissWithImeHandoff { editor = null } }) {
+        // Editor e Impostazioni sono schermate a schermo intero (overlay),
+        // sempre composte anche da chiuse: pre-riscaldano e l'uscita è animata
+        // con la stessa molla dell'ingresso.
+        FullScreenHost(visible = editor != null, onDismiss = { dismissWithImeHandoff { editor = null } }) {
             EditorScreen(
                 viewModel = viewModel,
                 cardId = editor?.cardId,
-                inSheet = true,
+                inSheet = false,
                 onBack = { dismissWithImeHandoff { editor = null } },
                 onSaved = { dismissWithImeHandoff { editor = null } }
             )
         }
 
-        FidelySheet(visible = showSettings, onDismiss = { showSettings = false }) {
+        FullScreenHost(visible = showSettings, onDismiss = { showSettings = false }) {
             SettingsScreen(
                 viewModel = viewModel,
-                inSheet = true,
+                inSheet = false,
                 onBack = { showSettings = false },
                 onShowTutorial = {
                     showSettings = false

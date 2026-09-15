@@ -14,6 +14,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -100,6 +101,43 @@ fun FidelySheet(
                             .clip(RoundedCornerShape(2.dp))
                             .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
                     )
+                    content()
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Schermata a schermo intero (overlay) con la stessa molla "Wallet" in ingresso
+ * e uscita del resto dell'app. Niente barra pull-up, niente angoli: le schermate
+ * interne (Editor, Impostazioni) occupano tutto il display e gestiscono i propri
+ * padding per status/navigation bar.
+ */
+@Composable
+fun FullScreenHost(
+    visible: Boolean,
+    onDismiss: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    BackHandler(enabled = visible) { onDismiss() }
+
+    val fadeInSpec: FiniteAnimationSpec<Float> = spring(dampingRatio = 0.8f, stiffness = 900f)
+    val fadeOutSpec: FiniteAnimationSpec<Float> = spring(dampingRatio = 0.9f, stiffness = 620f)
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        AnimatedVisibility(
+            visible = visible,
+            enter = fadeIn(animationSpec = fadeInSpec),
+            exit = fadeOut(animationSpec = fadeOutSpec)
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize()
+                ) {
                     content()
                 }
             }
