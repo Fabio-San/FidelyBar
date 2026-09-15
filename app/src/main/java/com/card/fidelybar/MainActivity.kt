@@ -27,8 +27,11 @@ class MainActivity : ComponentActivity() {
             if (darkStarting) R.style.Theme_FidelyBar_Starting_Dark
             else R.style.Theme_FidelyBar_Starting
         )
-        installSplashScreen()
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        splashScreen.setKeepOnScreenCondition {
+            viewModel.isLoading.value
+        }
         enableEdgeToEdge()
         setContent {
             FidelyBarTheme {

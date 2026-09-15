@@ -14,7 +14,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,7 +21,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -255,6 +253,13 @@ fun LogoOrMonogram(
                 if (circle) Modifier.padding(if (borderWhite) 3.dp else 5.dp)
                 else Modifier
             )
+        // L'ultimo bitmap valido viene conservato: durante la Crossfade il contenuto
+        // uscente viene ricomposto e, se intanto logoKey è diventato null (es. reset
+        // dell'editor), currentLogo sarebbe null -> NPE. Foto che svanisce pulita.
+        var lastLogo by remember { mutableStateOf<ImageBitmap?>(null) }
+        LaunchedEffect(currentLogo) {
+            if (currentLogo != null) lastLogo = currentLogo
+        }
         Crossfade(
             targetState = crossfadeState,
             animationSpec = tween(durationMillis = 120),
@@ -262,24 +267,36 @@ fun LogoOrMonogram(
             modifier = logoModifier
         ) { target ->
             when (target) {
-                1 -> Image(
-                    bitmap = currentLogo!!,
-                    contentDescription = null,
-                    contentScale = androidx.compose.ui.layout.ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize()
-                )
+                1 -> {
+                    val logo = currentLogo ?: lastLogo
+                    if (logo != null) {
+                        Image(
+                            bitmap = logo,
+                            contentDescription = null,
+                            contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
                 2 -> AsyncImage(
                     model = model!!,
                     contentDescription = null,
                     contentScale = androidx.compose.ui.layout.ContentScale.Fit,
                     modifier = Modifier.fillMaxSize()
                 )
-                else -> Text(
-                    text = monogram.toString(),
-                    color = contentColor,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = (size * 0.42f).sp
-                )
+                else -> Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = monogram.toString(),
+                        color = contentColor,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = (size * 0.42f).sp,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1
+                    )
+                }
             }
         }
     }
@@ -404,39 +421,33 @@ fun CardVisual(
                 ) {
                     when {
                         compact -> {
-                            Row(
-                                modifier = Modifier.fillMaxSize(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                LogoOrMonogram(
-                                    monogram = card.monogram,
-                                    logoUrl = card.logoUrl,
-                                    containerColor = contentColor.copy(alpha = 0.16f),
-                                    contentColor = contentColor,
-                                    size = logoSize,
-                                    logoKey = card.presetId,
-                                    borderWhite = card.logoBorderWhite,
-                                    borderSize = card.logoBorderSize
-                                )
-                                Spacer(Modifier.width(10.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = card.title,
-                                        color = contentColor,
-                                        style = titleStyle,
-                                        fontWeight = FontWeight.Bold,
-                                        textAlign = TextAlign.Center,
-                                        softWrap = true,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.fillMaxWidth()
+                            Box(Modifier.fillMaxSize()) {
+                                Box(modifier = Modifier.align(Alignment.CenterStart)) {
+                                    LogoOrMonogram(
+                                        monogram = card.monogram,
+                                        logoUrl = card.logoUrl,
+                                        containerColor = contentColor.copy(alpha = 0.16f),
+                                        contentColor = contentColor,
+                                        size = logoSize,
+                                        logoKey = card.presetId,
+                                        borderWhite = card.logoBorderWhite,
+                                        borderSize = card.logoBorderSize
                                     )
                                 }
+                                Text(
+                                    text = card.title,
+                                    color = contentColor,
+                                    style = titleStyle,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    softWrap = true,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier
+                                        .align(Alignment.Center)
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 48.dp)
+                                )
                             }
                         }
                         dense -> {

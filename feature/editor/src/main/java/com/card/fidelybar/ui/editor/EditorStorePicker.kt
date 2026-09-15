@@ -145,12 +145,6 @@ internal fun StorePickerSection(
                     }
                 }
                 Spacer(Modifier.height(12.dp))
-                Text(
-                    text = "Poi potrai cambiare ente in qualsiasi momento.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
-                )
             }
         }
     }

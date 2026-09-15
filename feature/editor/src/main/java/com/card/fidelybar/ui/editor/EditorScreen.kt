@@ -44,6 +44,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -63,6 +64,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -70,6 +72,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -97,6 +100,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
+import androidx.core.graphics.scale
+import androidx.core.graphics.get
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -120,18 +126,19 @@ fun EditorScreen(
     var logoUrl by rememberSaveable { mutableStateOf<String?>(null) }
     var isCustomColor by rememberSaveable { mutableStateOf(true) }
     var logoBorderWhite by rememberSaveable { mutableStateOf(false) }
-    var logoBorderSize by rememberSaveable { mutableStateOf(1) }
+    var logoBorderSize by rememberSaveable { mutableIntStateOf(1) }
     var query by rememberSaveable { mutableStateOf("") }
     var storeChosen by rememberSaveable { mutableStateOf(false) }
     var showFormatPicker by rememberSaveable { mutableStateOf(false) }
     var showColorPicker by rememberSaveable { mutableStateOf(false) }
     var showScanner by rememberSaveable { mutableStateOf(false) }
-    var step by rememberSaveable { mutableStateOf(0) }
+    var step by rememberSaveable { mutableIntStateOf(0) }
     var saving by remember { mutableStateOf(false) }
     var scanStatus by remember { mutableStateOf<String?>(null) }
     val editorScroll = rememberScrollState()
 
     LaunchedEffect(editingCard) {
+        saving = false
         val c = editingCard ?: return@LaunchedEffect
         title = c.title
         number = c.number
@@ -266,38 +273,42 @@ fun EditorScreen(
         val effectiveMonogram = if (monogram.isLetter()) monogram else (effectiveTitle.firstOrNull() ?: '\u03A6')
         saving = true
         scope.launch {
-            if (editingCard != null) {
-                viewModel.updateCard(
-                    editingCard.copy(
+            try {
+                if (editingCard != null) {
+                    viewModel.updateCard(
+                        editingCard.copy(
+                            presetId = if (isCustom) null else presetId,
+                            title = effectiveTitle,
+                            number = normalized,
+                            format = format,
+                            primaryColorHex = primaryHex,
+                            secondaryColorHex = secondaryHex,
+                            monogram = effectiveMonogram,
+                            logoUrl = if (isCustom) null else logoUrl,
+                            logoBorderWhite = logoBorderWhite,
+                            logoBorderSize = logoBorderSize
+                        )
+                    )
+                } else {
+                    viewModel.addCard(
                         presetId = if (isCustom) null else presetId,
                         title = effectiveTitle,
                         number = normalized,
                         format = format,
-                        primaryColorHex = primaryHex,
-                        secondaryColorHex = secondaryHex,
+                        primaryHex = primaryHex,
+                        secondaryHex = secondaryHex,
                         monogram = effectiveMonogram,
                         logoUrl = if (isCustom) null else logoUrl,
                         logoBorderWhite = logoBorderWhite,
                         logoBorderSize = logoBorderSize
                     )
-                )
-            } else {
-                viewModel.addCard(
-                    presetId = if (isCustom) null else presetId,
-                    title = effectiveTitle,
-                    number = normalized,
-                    format = format,
-                    primaryHex = primaryHex,
-                    secondaryHex = secondaryHex,
-                    monogram = effectiveMonogram,
-                    logoUrl = if (isCustom) null else logoUrl,
-                    logoBorderWhite = logoBorderWhite,
-                    logoBorderSize = logoBorderSize
-                )
+                }
+                delay(380.milliseconds)
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onSaved()
+            } finally {
+                saving = false
             }
-            delay(380)
-            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            onSaved()
         }
     }
 
@@ -356,14 +367,18 @@ fun EditorScreen(
             if (!isImmersiveSearch) editorScroll.animateScrollTo(0)
         }
 
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(FidelyBackgroundBrush())
+        ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
                 .verticalScroll(editorScroll)
                 .let { if (inSheet) it else it.navigationBarsPadding() }
                 .let { if (inSheet) it else it.imePadding() }
-                .padding(bottom = 24.dp)
+                .padding(bottom = 100.dp)
         ) {
         Row(
             modifier = Modifier
@@ -372,7 +387,9 @@ fun EditorScreen(
                 .padding(horizontal = 8.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack) {
+            IconButton(onClick = {
+                if (step == 0) onBack() else step -= 1
+            }) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Indietro")
             }
             Text(
@@ -394,14 +411,46 @@ fun EditorScreen(
             ) + fadeOut(animationSpec = spring(dampingRatio = 0.9f, stiffness = 400f))
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                CardVisual(
-                    card = previewCard,
-                    onClick = {},
-                    elevation = 1.dp,
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(start = 20.dp, end = 20.dp, top = 2.dp, bottom = 18.dp)
-                )
+                ) {
+                    CardVisual(
+                        card = previewCard,
+                        onClick = { if (step == 0 && storeChosen) storeChosen = false },
+                        elevation = 1.dp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    // Badge "Cambia" visibile solo in step 0 con negozio scelto (S1)
+                    if (step == 0 && storeChosen) {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(end = 8.dp, bottom = 24.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    Icons.Filled.Edit,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(12.dp),
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    "Cambia",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+                }
 
                 WizardStepper(
                     current = step,
@@ -474,6 +523,7 @@ fun EditorScreen(
                             secondaryHex = secondaryHex,
                             monogram = monogram,
                             previewTitle = title.ifBlank { fallbackTitle },
+                            fallbackTitle = fallbackTitle,
                             presetId = if (isCustom) null else presetId,
                             logoUrl = if (isCustom) null else logoUrl,
                             hasLogo = hasLogo,
@@ -491,60 +541,64 @@ fun EditorScreen(
                 }
             }
         }
+        }
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .let { if (inSheet) it else it.navigationBarsPadding() }
-                .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 12.dp)
-        ) {
-            when (step) {
-                0 -> WizardActionButton(
-                    text = "Avanti",
-                    enabled = storeChosen,
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        step = 1
-                    }
-                )
-                1 -> WizardActionButton(
-                    text = "Avanti",
-                    enabled = saveEnabled,
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        step = 2
-                    }
-                )
-                else -> Column {
-                    Button(
-                        onClick = { save() },
-                        enabled = saveEnabled && !saving,
-                        shape = RoundedCornerShape(18.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(54.dp)
+        // Scrim gradiente protettivo (S2) + barra pulsanti in BottomCenter
+        if (step != 0 || storeChosen) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+            ) {
+                // Gradiente da trasparente a sfondo, per staccare visivamente i pulsanti (S2)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(28.dp)
+                        .align(Alignment.TopCenter)
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                MaterialTheme.colorScheme.background.copy(alpha = 0f),
+                                MaterialTheme.colorScheme.background.copy(alpha = 0.95f)
+                            )
+                        )
+                    )
+            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .let { if (inSheet) it else it.navigationBarsPadding() }
+                    .let { if (inSheet) it else it.imePadding() }
+                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.95f))
+                    .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 12.dp)
+            ) {
+                when (step) {
+                    0 -> AnimatedVisibility(
+                        visible = storeChosen,
+                        enter = expandVertically(spring(dampingRatio = 0.85f, stiffness = 380f)) + fadeIn(),
+                        exit = shrinkVertically(spring(dampingRatio = 0.85f, stiffness = 380f)) + fadeOut()
                     ) {
-                        if (saving) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(22.dp),
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                strokeWidth = 2.5.dp
-                            )
-                        } else {
-                            Text(
-                                if (editingCard != null) "Salva modifiche" else "Aggiungi carta",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                        }
+                        WizardActionButton(
+                            text = "Avanti",
+                            enabled = true,
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                step = 1
+                            }
+                        )
                     }
-                    if (editingCard == null) {
-                        Spacer(Modifier.height(8.dp))
+                    1 -> Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
                         Button(
                             onClick = {
                                 resetNewCard()
                                 onBack()
                             },
-                            enabled = !saving,
+                            enabled = true,
                             shape = RoundedCornerShape(18.dp),
                             colors = ButtonDefaults.outlinedButtonColors(
                                 containerColor = Color.Transparent,
@@ -552,14 +606,93 @@ fun EditorScreen(
                             ),
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                             modifier = Modifier
-                                .fillMaxWidth()
+                                .weight(1f)
                                 .height(54.dp)
                         ) {
                             Text("Annulla", style = MaterialTheme.typography.titleMedium)
                         }
+                        WizardActionButton(
+                            text = "Avanti",
+                            enabled = saveEnabled,
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                step = 2
+                            },
+                            modifier = Modifier.weight(1.6f)
+                        )
+                    }
+                    else -> if (editingCard == null) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    resetNewCard()
+                                    onBack()
+                                },
+                                enabled = !saving,
+                                shape = RoundedCornerShape(18.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = Color.Transparent,
+                                    contentColor = MaterialTheme.colorScheme.error
+                                ),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(54.dp)
+                            ) {
+                                Text("Annulla", style = MaterialTheme.typography.titleMedium)
+                            }
+                            Button(
+                                onClick = { save() },
+                                enabled = saveEnabled && !saving,
+                                shape = RoundedCornerShape(18.dp),
+                                modifier = Modifier
+                                    .weight(1.6f)
+                                    .height(54.dp)
+                            ) {
+                                if (saving) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(22.dp),
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        strokeWidth = 2.5.dp
+                                    )
+                                } else {
+                                    Text(
+                                        "Aggiungi carta",
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        Button(
+                            onClick = { save() },
+                            enabled = saveEnabled && !saving,
+                            shape = RoundedCornerShape(18.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(54.dp)
+                        ) {
+                            if (saving) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(22.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    strokeWidth = 2.5.dp
+                                )
+                            } else {
+                                Text(
+                                    "Salva modifiche",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            }
+                        }
                     }
                 }
             }
+        }
         }
     }
 
@@ -693,12 +826,12 @@ private fun CodeStepContent(
             Text(
                 text = it,
                 style = MaterialTheme.typography.bodySmall,
-                color = if (scanStatus.contains("Lettura") == true) MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (scanStatus.contains("Lettura")) MaterialTheme.colorScheme.onSurfaceVariant
                 else MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(horizontal = 4.dp)
             )
         }
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(12.dp))
         if (number.isNotBlank() && validationError == null) {
             CardCodeView(
                 card = UserCard(
@@ -707,14 +840,6 @@ private fun CodeStepContent(
                     number = number,
                     format = format
                 ),
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = formatForDisplay(number.trim(), format),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
         } else {
@@ -746,6 +871,7 @@ private fun DetailsStepContent(
     secondaryHex: String,
     monogram: Char,
     previewTitle: String,
+    fallbackTitle: String,
     presetId: String?,
     logoUrl: String?,
     hasLogo: Boolean,
@@ -769,16 +895,12 @@ private fun DetailsStepContent(
         OutlinedTextField(
             value = title,
             onValueChange = onTitleChange,
-            label = { Text("Nome della carta") },
+            placeholder = { Text(fallbackTitle) },
             singleLine = true,
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth()
         )
-        Text(
-            "Colore",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(top = 20.dp, bottom = 8.dp)
-        )
+        Spacer(Modifier.height(12.dp))
         ColorPickerTile(
             primaryHex = primaryHex,
             secondaryHex = secondaryHex,
@@ -856,17 +978,13 @@ private fun DetailsStepContent(
     }
 }
 
-private fun formatForDisplay(number: String, format: BarcodeFormatType): String =
-    if (format == BarcodeFormatType.QR_CODE) number
-    else number.chunked(4).joinToString(" ")
-
 private fun extractCardHex(bitmap: Bitmap): Pair<String, String>? {
     val w = 48
     val h = (48f * bitmap.height / bitmap.width).toInt().coerceIn(1, 48)
-    val small = Bitmap.createScaledBitmap(bitmap, w, h, true)
+    val small = bitmap.scale(w, h, true)
     val counts = HashMap<Int, Int>()
     for (i in 0 until w * h) {
-        val pixel = small.getPixel(i % w, i / w)
+        val pixel = small[i % w, i / w]
         val quantized = pixel and 0xF0F0F0
         counts[quantized] = (counts[quantized] ?: 0) + 1
     }

@@ -24,11 +24,18 @@ class FidelyBarViewModel(app: Application) : AndroidViewModel(app) {
     private val _cards = MutableStateFlow<List<UserCard>>(emptyList())
     val cards = _cards.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading = _isLoading.asStateFlow()
+
     val presets: List<StorePreset> = StoreCatalog.all
 
     init {
-        _cards.value = repository.load()
-        prefetchLogos()
+        viewModelScope.launch(Dispatchers.IO) {
+            val list = repository.load()
+            _cards.value = list
+            _isLoading.value = false
+            prefetchLogos()
+        }
     }
 
     private fun prefetchLogos() {

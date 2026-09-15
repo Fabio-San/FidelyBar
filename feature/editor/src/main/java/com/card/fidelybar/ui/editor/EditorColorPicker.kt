@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -115,11 +114,19 @@ internal fun ColorPickerTile(
             Box(
                 modifier = Modifier
                     .size(52.dp)
-                    .clip(CircleShape)
+                    .clip(RoundedCornerShape(12.dp))
                     .background(Brush.linearGradient(listOf(primary, secondary)))
-                    .border(3.dp, MaterialTheme.colorScheme.surface, CircleShape)
-            )
-            Column {
+                    .border(1.5.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.9f),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            Column(modifier = Modifier.padding(start = 10.dp)) {
                 Text(
                     "Scegli colore",
                     style = MaterialTheme.typography.titleSmall,

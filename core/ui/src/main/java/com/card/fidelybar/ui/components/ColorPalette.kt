@@ -86,10 +86,13 @@ val basePalette = listOf(
     ColorChoice("#EF4444", "#DC2626", "Rosso"),
     ColorChoice("#EAB308", "#CA8A04", "Giallo"),
     ColorChoice("#0E7C61", "#0A5C49", "Verde"),
+    ColorChoice("#10B981", "#059669", "Smeraldo"),
     ColorChoice("#3B82F6", "#2563EB", "Blu"),
+    ColorChoice("#0891B2", "#0E7490", "Ciano"),
     ColorChoice("#111827", "#030712", "Nero"),
     ColorChoice("#64748B", "#475569", "Ardesia"),
     ColorChoice("#8B5CF6", "#6D28D9", "Viola"),
+    ColorChoice("#DB2777", "#BE185D", "Fucsia"),
     ColorChoice("#F97316", "#EA580C", "Arancione"),
     ColorChoice("#EC4899", "#DB2777", "Rosa")
 )

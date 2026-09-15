@@ -131,7 +131,10 @@ class CardFileStore(context: Context) {
             // Step 1: scrivi su file temp (plain text come backup)
             tempFile.writeText(encoded, Charsets.UTF_8)
 
-            // Step 2: scrivi su file criptato
+            // Step 2: scrivi su file criptato. Se esiste già, cancellalo prima altrimenti openFileOutput lancia IOException
+            if (file.exists()) {
+                file.delete()
+            }
             encryptedFile.openFileOutput().use { output ->
                 output.write(encoded.toByteArray(Charsets.UTF_8))
             }

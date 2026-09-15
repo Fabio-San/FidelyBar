@@ -134,14 +134,17 @@ internal fun WizardStepScroll(
 }
 
 @Composable
-internal fun WizardActionButton(text: String, enabled: Boolean, onClick: () -> Unit) {
+internal fun WizardActionButton(
+    text: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier.fillMaxWidth()
+) {
     Button(
         onClick = onClick,
         enabled = enabled,
         shape = RoundedCornerShape(18.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(54.dp)
+        modifier = modifier.height(54.dp)
     ) {
         Text(text, style = MaterialTheme.typography.titleMedium)
     }
