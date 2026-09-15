@@ -22,6 +22,13 @@ in `app/build.gradle.kts` (il versionCode deve sempre aumentare).
 - Compila solo Kotlin: `.\gradlew.bat :app:compileDebugKotlin`
 - Commit convention: Conventional Commits, messaggi in italiano.
 
+## Architectura (regola fondamentale)
+- Lavorare SEMPRE con la modularità in mente: nel dubbio, spezzare in moduli/componenti
+  più piccoli e riutilizzabili piuttosto che accrescere file esistenti.
+- Nuovo codice UI astratto/riutilizzabile → `:core:ui`. Logica dati/persistenza → `:core:data`.
+  Modelli/domini puri → `:core:model`. Schermate → moduli `:feature:*`.
+- Mantenere i package Kotlin identici ai layout attuali (spostare i file, non rinominare i package).
+
 ## App
 - Wallet carte fedeltà offline-first. Niente Room: persistenza JSON in
   `fidelybar_cards.json` via `CardFileStore` + `StateFlow` nel ViewModel.
