@@ -159,25 +159,28 @@ fun HomeScreen(
                 .fillMaxSize()
                 .background(FidelyBackgroundBrush())
         ) {
-            if (cards.isEmpty()) {
-                EmptyHome(
-                    onAdd = onAddCard,
-                    modifier = Modifier.padding(inner)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(inner)
+            ) {
+                HomeHeader(
+                    onCredits = { showCredits = true },
+                    onOpenSettings = onOpenSettings,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)
                 )
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(inner),
-                    contentPadding = PaddingValues(bottom = 110.dp)
-                ) {
-                    item {
-                        HomeHeader(
-                            onCredits = { showCredits = true },
-                            onOpenSettings = onOpenSettings,
-                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)
-                        )
-                    }
+                if (cards.isEmpty()) {
+                    EmptyHome(
+                        onAdd = onAddCard,
+                        modifier = Modifier.weight(1f)
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentPadding = PaddingValues(bottom = 110.dp)
+                    ) {
 
                     item {
                         SectionHeader(
@@ -244,6 +247,7 @@ fun HomeScreen(
             }
         }
     }
+}
 }
 
 @Composable
