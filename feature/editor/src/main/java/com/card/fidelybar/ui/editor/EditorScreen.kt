@@ -22,11 +22,13 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -83,6 +85,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import com.card.fidelybar.FidelyBarViewModel
 import com.card.fidelybar.barcode.BarcodeEngine
 import com.card.fidelybar.data.BarcodeFormatType
@@ -102,6 +105,7 @@ import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 import androidx.core.graphics.scale
 import androidx.core.graphics.get
+import com.card.fidelybar.ui.components.LogoBitmapCache
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -354,206 +358,197 @@ fun EditorScreen(
     } else {
         val pid = presetId
         logoUrl != null ||
-            (pid != null && com.card.fidelybar.ui.components.LogoBitmapCache.resId(context, pid) != 0)
+            (pid != null && LogoBitmapCache.resId(context, pid) != 0)
     }
 
-        var isSearchFocused by remember { mutableStateOf(false) }
-        val imeVisible = rememberImeVisible().value
-        val isImmersiveSearch = step == 0 && imeVisible && (isSearchFocused || query.isNotBlank())
+    var isSearchFocused by remember { mutableStateOf(false) }
+    val imeVisible = rememberImeVisible().value
+    val isImmersiveSearch = step == 0 && imeVisible && (isSearchFocused || query.isNotBlank())
 
-        // Uscendo dalla ricerca immersiva (tastiera chiusa o query azzerata) torna
-        // in cima così l'anteprima della carta e lo stepper sono di nuovo visibili.
-        LaunchedEffect(isImmersiveSearch) {
-            if (!isImmersiveSearch) editorScroll.animateScrollTo(0)
-        }
+    LaunchedEffect(isImmersiveSearch) {
+        if (!isImmersiveSearch) editorScroll.animateScrollTo(0)
+    }
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(FidelyBackgroundBrush())
-        ) {
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(FidelyBackgroundBrush())
+    ) {
+        val minContentHeight = maxHeight + 1.dp
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .let {
-                    if (step == 2) it.verticalScroll(editorScroll)
-                    else it
-                }
+                .verticalScroll(editorScroll)
                 .let { if (inSheet) it else it.navigationBarsPadding() }
                 .let { if (inSheet) it else it.imePadding() }
-                .padding(bottom = 100.dp)
         ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .let { if (inSheet) it else it.statusBarsPadding() }
-                .padding(horizontal = 8.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = {
-                if (step == 0) onBack() else step -= 1
-            }) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Indietro")
-            }
-            Text(
-                text = if (editingCard != null) "Modifica carta" else "Nuova carta",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        AnimatedVisibility(
-            visible = !isImmersiveSearch,
-            enter = expandVertically(
-                animationSpec = spring(dampingRatio = 0.85f, stiffness = 380f),
-                expandFrom = Alignment.Top
-            ) + fadeIn(animationSpec = spring(dampingRatio = 0.9f, stiffness = 400f)),
-            exit = shrinkVertically(
-                animationSpec = spring(dampingRatio = 0.85f, stiffness = 380f),
-                shrinkTowards = Alignment.Top
-            ) + fadeOut(animationSpec = spring(dampingRatio = 0.9f, stiffness = 400f))
-        ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Box(
+            Column(modifier = Modifier.defaultMinSize(minHeight = minContentHeight)) {
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 20.dp, end = 20.dp, top = 2.dp, bottom = 18.dp)
+                        .let { if (inSheet) it else it.statusBarsPadding() }
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    CardVisual(
-                        card = previewCard,
-                        onClick = { if (step == 0 && storeChosen) storeChosen = false },
-                        elevation = 1.dp,
-                        modifier = Modifier.fillMaxWidth()
+                    IconButton(onClick = {
+                        if (step == 0) onBack() else step -= 1
+                    }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Indietro")
+                    }
+                    Text(
+                        text = if (editingCard != null) "Modifica carta" else "Nuova carta",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
                     )
-                    // Badge "Cambia" visibile solo in step 0 con negozio scelto (S1)
-                    if (step == 0 && storeChosen) {
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
+                }
+
+                AnimatedVisibility(
+                    visible = !isImmersiveSearch,
+                    enter = expandVertically(
+                        animationSpec = spring(dampingRatio = 0.85f, stiffness = 380f),
+                        expandFrom = Alignment.Top
+                    ) + fadeIn(animationSpec = spring(dampingRatio = 0.9f, stiffness = 400f)),
+                    exit = shrinkVertically(
+                        animationSpec = spring(dampingRatio = 0.85f, stiffness = 380f),
+                        shrinkTowards = Alignment.Top
+                    ) + fadeOut(animationSpec = spring(dampingRatio = 0.9f, stiffness = 400f))
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Box(
                             modifier = Modifier
-                                .align(Alignment.BottomEnd)
-                                .padding(end = 8.dp, bottom = 24.dp)
+                                .fillMaxWidth()
+                                .padding(start = 20.dp, end = 20.dp, top = 2.dp, bottom = 18.dp)
                         ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Icon(
-                                    Icons.Filled.Edit,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(12.dp),
-                                    tint = MaterialTheme.colorScheme.onSurface
+                            CardVisual(
+                                card = previewCard,
+                                onClick = { if (step == 0 && storeChosen) storeChosen = false },
+                                elevation = 1.dp,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            if (step == 0 && storeChosen) {
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
+                                    modifier = Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .padding(end = 8.dp, bottom = 24.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Filled.Edit,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(12.dp),
+                                            tint = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            "Cambia",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        WizardStepper(
+                            current = step,
+                            onNavigate = { target ->
+                                if (target < step) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    step = target
+                                }
+                            }
+                        )
+                    }
+                }
+
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    AnimatedContent(
+                        targetState = step,
+                        transitionSpec = {
+                            (fadeIn(tween(200)) + slideInHorizontally(tween(240)) { it / 12 })
+                                .togetherWith(
+                                    fadeOut(tween(120)) + slideOutHorizontally(tween(180)) { -it / 12 }
                                 )
-                                Text(
-                                    "Cambia",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurface
+                        },
+                        label = "wizardStep"
+                    ) { currentStep ->
+                        when (currentStep) {
+                            0 -> StorePickerSection(
+                                storeChosen = storeChosen,
+                                isCustom = isCustom,
+                                monogram = if (isCustom) '\u03A6' else monogram,
+                                logoUrl = if (isCustom) null else logoUrl,
+                                name = fallbackTitle,
+                                subtitle = format.label,
+                                primaryHex = primaryHex,
+                                storeId = if (isCustom) null else presetId,
+                                customPalettePrimary = customPalette.first().primary,
+                                query = query,
+                                onQueryChange = { query = it },
+                                onFocusChanged = { isSearchFocused = it },
+                                onSelectPreset = { selectPreset(it) },
+                                onSelectCustom = { selectCustom() },
+                                onChange = { storeChosen = false }
+                            )
+                            1 -> WizardStepScroll {
+                                CodeStepContent(
+                                    number = number,
+                                    format = format,
+                                    onNumberChange = { raw ->
+                                        number = when (format) {
+                                            BarcodeFormatType.QR_CODE -> raw
+                                            else -> raw.filter { it.isDigit() }.take(BarcodeEngine.expectedDigits(format) ?: 40)
+                                        }
+                                    },
+                                    onFormatChange = { format = it },
+                                    showFormatPicker = showFormatPicker,
+                                    onToggleFormatPicker = { showFormatPicker = !showFormatPicker },
+                                    scanStatus = scanStatus,
+                                    validationError = validationError,
+                                    onCameraClick = { handleCameraTap() },
+                                    onGalleryClick = { galleryLauncher.launch("image/*") }
+                                )
+                            }
+                            else -> WizardStepScroll(scrollState = editorScroll) {
+                                DetailsStepContent(
+                                    title = title,
+                                    onTitleChange = { title = it },
+                                    primaryHex = primaryHex,
+                                    secondaryHex = secondaryHex,
+                                    monogram = monogram,
+                                    previewTitle = title.ifBlank { fallbackTitle },
+                                    fallbackTitle = fallbackTitle,
+                                    presetId = if (isCustom) null else presetId,
+                                    logoUrl = if (isCustom) null else logoUrl,
+                                    hasLogo = hasLogo,
+                                    logoBorderWhite = logoBorderWhite,
+                                    onLogoBorderChange = {
+                                        logoBorderWhite = it
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    },
+                                    logoBorderSize = logoBorderSize,
+                                    onLogoBorderSizeChange = { logoBorderSize = it },
+                                    scrollState = editorScroll,
+                                    onOpenColorPicker = { showColorPicker = true }
                                 )
                             }
                         }
                     }
                 }
-
-                WizardStepper(
-                    current = step,
-                    onNavigate = { target ->
-                        if (target < step) {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            step = target
-                        }
-                    }
-                )
             }
         }
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            AnimatedContent(
-                targetState = step,
-                transitionSpec = {
-                    (fadeIn(tween(200)) + slideInHorizontally(tween(240)) { it / 12 })
-                        .togetherWith(
-                            fadeOut(tween(120)) + slideOutHorizontally(tween(180)) { -it / 12 }
-                        )
-                },
-                label = "wizardStep"
-            ) { currentStep ->
-                when (currentStep) {
-                    0 -> StorePickerSection(
-                        storeChosen = storeChosen,
-                            isCustom = isCustom,
-                            monogram = if (isCustom) '\u03A6' else monogram,
-                            logoUrl = if (isCustom) null else logoUrl,
-                            name = fallbackTitle,
-                            subtitle = format.label,
-                            primaryHex = primaryHex,
-                            storeId = if (isCustom) null else presetId,
-                            customPalettePrimary = customPalette.first().primary,
-                            query = query,
-                            onQueryChange = { query = it },
-                            onFocusChanged = { isSearchFocused = it },
-                            onSelectPreset = { selectPreset(it) },
-                            onSelectCustom = { selectCustom() },
-                            onChange = { storeChosen = false }
-                        )
-                    1 -> WizardStepScroll {
-                        CodeStepContent(
-                            number = number,
-                            format = format,
-                            onNumberChange = { raw ->
-                                number = when (format) {
-                                    BarcodeFormatType.QR_CODE -> raw
-                                    else -> raw.filter { it.isDigit() }.take(BarcodeEngine.expectedDigits(format) ?: 40)
-                                }
-                            },
-                            onFormatChange = { format = it },
-                            showFormatPicker = showFormatPicker,
-                            onToggleFormatPicker = { showFormatPicker = !showFormatPicker },
-                            scanStatus = scanStatus,
-                            validationError = validationError,
-                            onCameraClick = { handleCameraTap() },
-                            onGalleryClick = { galleryLauncher.launch("image/*") }
-                        )
-                    }
-                    else -> WizardStepScroll(scrollState = editorScroll) {
-                        DetailsStepContent(
-                            title = title,
-                            onTitleChange = { title = it },
-                            primaryHex = primaryHex,
-                            secondaryHex = secondaryHex,
-                            monogram = monogram,
-                            previewTitle = title.ifBlank { fallbackTitle },
-                            fallbackTitle = fallbackTitle,
-                            presetId = if (isCustom) null else presetId,
-                            logoUrl = if (isCustom) null else logoUrl,
-                            hasLogo = hasLogo,
-                            logoBorderWhite = logoBorderWhite,
-                            onLogoBorderChange = {
-                                logoBorderWhite = it
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            },
-                            logoBorderSize = logoBorderSize,
-                            onLogoBorderSizeChange = { logoBorderSize = it },
-                            scrollState = editorScroll,
-                            onOpenColorPicker = { showColorPicker = true }
-                        )
-                    }
-                }
-            }
-        }
-        }
-
-        // Scrim gradiente protettivo (S2) + barra pulsanti in BottomCenter
         if (step != 0 || storeChosen) {
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
             ) {
-                // Gradiente da trasparente a sfondo, per staccare visivamente i pulsanti (S2)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -562,70 +557,36 @@ fun EditorScreen(
                         .background(
                             Brush.verticalGradient(
                                 listOf(
-                                MaterialTheme.colorScheme.background.copy(alpha = 0f),
-                                MaterialTheme.colorScheme.background.copy(alpha = 0.95f)
+                                    MaterialTheme.colorScheme.background.copy(alpha = 0f),
+                                    MaterialTheme.colorScheme.background.copy(alpha = 0.95f)
+                                )
                             )
                         )
-                    )
-            )
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .let { if (inSheet) it else it.navigationBarsPadding() }
-                    .let { if (inSheet) it else it.imePadding() }
-                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.95f))
-                    .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 12.dp)
-            ) {
-                when (step) {
-                    0 -> AnimatedVisibility(
-                        visible = storeChosen,
-                        enter = expandVertically(spring(dampingRatio = 0.85f, stiffness = 380f)) + fadeIn(),
-                        exit = shrinkVertically(spring(dampingRatio = 0.85f, stiffness = 380f)) + fadeOut()
-                    ) {
-                        WizardActionButton(
-                            text = "Avanti",
-                            enabled = true,
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                step = 1
-                            }
-                        )
-                    }
-                    1 -> Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Button(
-                            onClick = {
-                                resetNewCard()
-                                onBack()
-                            },
-                            enabled = true,
-                            shape = RoundedCornerShape(18.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = Color.Transparent,
-                                contentColor = MaterialTheme.colorScheme.error
-                            ),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(54.dp)
+                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .let { if (inSheet) it else it.navigationBarsPadding() }
+                        .let { if (inSheet) it else it.imePadding() }
+                        .background(MaterialTheme.colorScheme.background.copy(alpha = 0.95f))
+                        .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 12.dp)
+                ) {
+                    when (step) {
+                        0 -> AnimatedVisibility(
+                            visible = storeChosen,
+                            enter = expandVertically(spring(dampingRatio = 0.85f, stiffness = 380f)) + fadeIn(),
+                            exit = shrinkVertically(spring(dampingRatio = 0.85f, stiffness = 380f)) + fadeOut()
                         ) {
-                            Text("Annulla", style = MaterialTheme.typography.titleMedium)
+                            WizardActionButton(
+                                text = "Avanti",
+                                enabled = true,
+                                onClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    step = 1
+                                }
+                            )
                         }
-                        WizardActionButton(
-                            text = "Avanti",
-                            enabled = saveEnabled,
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                step = 2
-                            },
-                            modifier = Modifier.weight(1.6f)
-                        )
-                    }
-                    else -> if (editingCard == null) {
-                        Row(
+                        1 -> Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -635,7 +596,7 @@ fun EditorScreen(
                                     resetNewCard()
                                     onBack()
                                 },
-                                enabled = !saving,
+                                enabled = true,
                                 shape = RoundedCornerShape(18.dp),
                                 colors = ButtonDefaults.outlinedButtonColors(
                                     containerColor = Color.Transparent,
@@ -648,12 +609,69 @@ fun EditorScreen(
                             ) {
                                 Text("Annulla", style = MaterialTheme.typography.titleMedium)
                             }
+                            WizardActionButton(
+                                text = "Avanti",
+                                enabled = saveEnabled,
+                                onClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    step = 2
+                                },
+                                modifier = Modifier.weight(1.6f)
+                            )
+                        }
+                        else -> if (editingCard == null) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Button(
+                                    onClick = {
+                                        resetNewCard()
+                                        onBack()
+                                    },
+                                    enabled = !saving,
+                                    shape = RoundedCornerShape(18.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = Color.Transparent,
+                                        contentColor = MaterialTheme.colorScheme.error
+                                    ),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(54.dp)
+                                ) {
+                                    Text("Annulla", style = MaterialTheme.typography.titleMedium)
+                                }
+                                Button(
+                                    onClick = { save() },
+                                    enabled = saveEnabled && !saving,
+                                    shape = RoundedCornerShape(18.dp),
+                                    modifier = Modifier
+                                        .weight(1.6f)
+                                        .height(54.dp)
+                                ) {
+                                    if (saving) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(22.dp),
+                                            color = MaterialTheme.colorScheme.onPrimary,
+                                            strokeWidth = 2.5.dp
+                                        )
+                                    } else {
+                                        Text(
+                                            "Aggiungi carta",
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
                             Button(
                                 onClick = { save() },
                                 enabled = saveEnabled && !saving,
                                 shape = RoundedCornerShape(18.dp),
                                 modifier = Modifier
-                                    .weight(1.6f)
+                                    .fillMaxWidth()
                                     .height(54.dp)
                             ) {
                                 if (saving) {
@@ -664,38 +682,15 @@ fun EditorScreen(
                                     )
                                 } else {
                                     Text(
-                                        "Aggiungi carta",
+                                        "Salva modifiche",
                                         style = MaterialTheme.typography.titleMedium
                                     )
                                 }
                             }
                         }
-                    } else {
-                        Button(
-                            onClick = { save() },
-                            enabled = saveEnabled && !saving,
-                            shape = RoundedCornerShape(18.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(54.dp)
-                        ) {
-                            if (saving) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(22.dp),
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    strokeWidth = 2.5.dp
-                                )
-                            } else {
-                                Text(
-                                    "Salva modifiche",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                            }
-                        }
                     }
                 }
             }
-        }
         }
     }
 
@@ -711,7 +706,7 @@ fun EditorScreen(
     }
 
     if (showColorPicker) {
-ColorPickerScreen(
+        ColorPickerScreen(
             primaryHex = primaryHex,
             secondaryHex = secondaryHex,
             monogram = monogram,
@@ -994,7 +989,7 @@ private fun extractCardHex(bitmap: Bitmap): Pair<String, String>? {
     small.recycle()
     for ((color, _) in counts.entries.sortedByDescending { it.value }) {
         val hsl = FloatArray(3)
-        androidx.core.graphics.ColorUtils.colorToHSL(color, hsl)
+        ColorUtils.colorToHSL(color, hsl)
         if (hsl[1] >= 0.15f && hsl[2] in 0.12f..0.88f) {
             return "#%06X".format(color and 0xFFFFFF) to "#%06X".format(darkenRgb(color) and 0xFFFFFF)
         }

@@ -127,9 +127,12 @@ internal fun WizardStepScroll(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 20.dp, end = 20.dp, bottom = 16.dp)
+            .padding(start = 20.dp, end = 20.dp)
     ) {
         content()
+        // Spazio protettivo in fondo per evitare che i pulsanti coprano il contenuto,
+        // aggiunto come elemento della colonna così influisce sullo scroll solo se necessario.
+        Spacer(Modifier.height(110.dp))
     }
 }
 

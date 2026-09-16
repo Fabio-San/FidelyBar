@@ -72,16 +72,18 @@ internal fun StorePickerSection(
         label = "storePicker"
     ) { chosen ->
         if (chosen) {
-            SelectedStoreBar(
-                monogram = monogram,
-                logoUrl = logoUrl,
-                name = name,
-                subtitle = subtitle,
-                primaryHex = primaryHex,
-                isCustom = isCustom,
-                storeId = storeId,
-                onChange = onChange
-            )
+            WizardStepScroll {
+                SelectedStoreBar(
+                    monogram = monogram,
+                    logoUrl = logoUrl,
+                    name = name,
+                    subtitle = subtitle,
+                    primaryHex = primaryHex,
+                    isCustom = isCustom,
+                    storeId = storeId,
+                    onChange = onChange
+                )
+            }
         } else {
             WizardStepScroll {
                 Box(
