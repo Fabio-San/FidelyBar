@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.card.fidelybar.data.BarcodeFormatType
 import com.card.fidelybar.data.CardRepository
 import com.card.fidelybar.data.CardRepositoryImpl
+import com.card.fidelybar.data.LoadResult
 import com.card.fidelybar.data.LogoCache
 import com.card.fidelybar.data.StoreCatalog
 import com.card.fidelybar.data.StorePreset
@@ -27,15 +28,52 @@ class FidelyBarViewModel(app: Application) : AndroidViewModel(app) {
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
 
+    private val _loadFailed = MutableStateFlow(false)
+    val loadFailed = _loadFailed.asStateFlow()
+
     val presets: List<StorePreset> = StoreCatalog.all
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            val list = repository.load()
-            _cards.value = list
-            _isLoading.value = false
+            applyLoadResult()
             prefetchLogos()
         }
+    }
+
+    private fun applyLoadResult() {
+        when (val result = repository.loadWithResult()) {
+            is LoadResult.Success -> {
+                _cards.value = result.cards
+                _loadFailed.value = false
+            }
+            is LoadResult.Migrated -> {
+                _cards.value = result.cards
+                _loadFailed.value = false
+            }
+            is LoadResult.Empty -> {
+                _cards.value = emptyList()
+                _loadFailed.value = false
+            }
+            is LoadResult.Error -> {
+                _cards.value = emptyList()
+                _loadFailed.value = true
+            }
+        }
+        _isLoading.value = false
+    }
+
+    fun retryLoad() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _isLoading.value = true
+            _loadFailed.value = false
+            applyLoadResult()
+            prefetchLogos()
+        }
+    }
+
+    fun acknowledgeLoadError() {
+        _loadFailed.value = false
+        persist()
     }
 
     private fun prefetchLogos() {
@@ -123,6 +161,9 @@ class FidelyBarViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun persist() {
+        if (_loadFailed.value && _cards.value.isEmpty()) {
+            return
+        }
         viewModelScope.launch(Dispatchers.IO) {
             repository.save(_cards.value)
         }

@@ -31,6 +31,7 @@ class CardFileStore(context: Context) {
     private val filesDir: File = context.filesDir
     private val file: File = File(filesDir, "fidelybar_cards.json")
     private val tempFile: File = File(filesDir, "fidelybar_cards.json.tmp")
+    private val backupFile: File = File(filesDir, "fidelybar_cards.json.bak")
 
     private val encryptedFile: EncryptedFile = EncryptedFile.Builder(
         context,
@@ -78,6 +79,13 @@ class CardFileStore(context: Context) {
             return LoadResult.Migrated(fromTemp)
         }
 
+        // Tentativo 4: prova a recuperare dall'ultima copia valida (.bak)
+        val fromBackup = readFromBackup()
+        if (fromBackup != null) {
+            save(fromBackup)
+            return LoadResult.Migrated(fromBackup)
+        }
+
         return LoadResult.Error("File corrotto: impossibile leggere le carte")
     }
 
@@ -121,6 +129,17 @@ class CardFileStore(context: Context) {
         }
     }
 
+    private fun readFromBackup(): List<UserCard>? {
+        if (!backupFile.exists()) return null
+        return runCatching {
+            backupFile.copyTo(file, overwrite = true)
+            (readEncrypted() as? LoadResult.Success)?.cards
+        }.getOrElse {
+            Log.w(TAG, "Recupero da backup fallito", it)
+            null
+        }
+    }
+
     fun save(cards: List<UserCard>): Boolean {
         return try {
             val sorted = cards.sortedWith(
@@ -130,6 +149,11 @@ class CardFileStore(context: Context) {
 
             // Step 1: scrivi su file temp (plain text come backup)
             tempFile.writeText(encoded, Charsets.UTF_8)
+
+            // Step 1.5: conserva una copia cifrata dell'ultima versione valida
+            if (file.exists()) {
+                runCatching { file.copyTo(backupFile, overwrite = true) }
+            }
 
             // Step 2: scrivi su file criptato. Se esiste già, cancellalo prima altrimenti openFileOutput lancia IOException
             if (file.exists()) {

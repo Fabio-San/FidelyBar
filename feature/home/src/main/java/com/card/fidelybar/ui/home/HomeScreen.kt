@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,6 +37,7 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
@@ -83,6 +85,7 @@ fun HomeScreen(
     onOpenSettings: () -> Unit
 ) {
     val cards by viewModel.cards.collectAsStateWithLifecycle()
+    val loadFailed by viewModel.loadFailed.collectAsStateWithLifecycle()
     val orderedCards = remember(cards) {
         cards.sortedWith(compareBy { !it.isFavorite })
     }
@@ -169,7 +172,22 @@ fun HomeScreen(
                     onOpenSettings = onOpenSettings,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)
                 )
-                if (cards.isEmpty()) {
+                if (loadFailed && cards.isEmpty()) {
+                    LoadErrorBanner(
+                        onRetry = { viewModel.retryLoad() },
+                        onDismiss = { viewModel.acknowledgeLoadError() },
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    )
+                    Spacer(Modifier.height(20.dp))
+                    Text(
+                        text = "Le carte salvate sul dispositivo non sono leggibili. Riprova il recupero oppure autorizza la sostituzione: le nuove carte salvate sovrascriveranno le precedenti.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 32.dp)
+                    )
+                    Spacer(Modifier.weight(1f))
+                } else if (cards.isEmpty()) {
                     EmptyHome(
                         onAdd = onAddCard,
                         modifier = Modifier.weight(1f)
@@ -347,6 +365,41 @@ private fun CardListItem(
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center
             )
+        }
+    }
+}
+
+@Composable
+private fun LoadErrorBanner(
+    onRetry: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Filled.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    text = "Impossibile leggere le carte salvate",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            Spacer(Modifier.height(4.dp))
+            Row(modifier = Modifier.align(Alignment.End), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                TextButton(onClick = onRetry) { Text("Riprova") }
+                TextButton(onClick = onDismiss) { Text("Sostituisci") }
+            }
         }
     }
 }
