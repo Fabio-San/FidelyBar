@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 internal enum class StepState { DONE, ACTIVE, TODO }
@@ -122,6 +123,7 @@ private fun StepDot(index: Int, label: String, state: StepState, onClick: (() ->
 @Composable
 internal fun WizardStepScroll(
     scrollState: ScrollState = rememberScrollState(),
+    bottomSpacer: Dp = 110.dp,
     content: @Composable () -> Unit
 ) {
     Column(
@@ -132,7 +134,7 @@ internal fun WizardStepScroll(
         content()
         // Spazio protettivo in fondo per evitare che i pulsanti coprano il contenuto,
         // aggiunto come elemento della colonna così influisce sullo scroll solo se necessario.
-        Spacer(Modifier.height(110.dp))
+        Spacer(Modifier.height(bottomSpacer))
     }
 }
 

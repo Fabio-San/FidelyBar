@@ -55,6 +55,8 @@ import kotlin.math.roundToInt
 
 data class ColorChoice(val primary: String, val secondary: String, val label: String)
 
+val customDefaultPalette = ColorChoice("#6B7280", "#4B5563", "Grigio")
+
 val customPalette = listOf(
     ColorChoice("#EF4444", "#DC2626", "Rosso"),
     ColorChoice("#F43F5E", "#E11D48", "Cremisi"),

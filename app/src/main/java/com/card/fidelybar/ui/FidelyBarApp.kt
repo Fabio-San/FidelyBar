@@ -1,12 +1,5 @@
 package com.card.fidelybar.ui
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -94,19 +87,8 @@ fun FidelyBarApp(viewModel: FidelyBarViewModel) {
         }
     }
 
-    AnimatedContent(
-        targetState = booted,
-        transitionSpec = {
-            (fadeIn(tween(340)) + scaleIn(
-                initialScale = 0.985f,
-                animationSpec = tween(340, easing = FastOutSlowInEasing)
-            ))
-                .togetherWith(fadeOut(tween(160)))
-        },
-        label = "bootTransition"
-    ) { isBooted ->
-        if (isBooted) {
-            Box(modifier = Modifier.fillMaxSize()) {
+    if (booted) {
+        Box(modifier = Modifier.fillMaxSize()) {
                 HomeScreen(
                     viewModel = viewModel,
                     onOpenCard = { id, source -> detail = DetailRequest(id, source) },
@@ -163,7 +145,6 @@ fun FidelyBarApp(viewModel: FidelyBarViewModel) {
         } else {
             StartupPlaceholder()
         }
-    }
 }
 
 @Composable

@@ -7,8 +7,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -53,7 +51,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -79,7 +76,6 @@ import com.card.fidelybar.ui.components.CardVisual
 import com.card.fidelybar.ui.components.foregroundFor
 import com.card.fidelybar.ui.components.rememberColor
 import com.card.fidelybar.ui.theme.FidelyBackgroundBrush
-import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(
@@ -217,23 +213,11 @@ fun HomeScreen(
                         )
                     }
 
-                    itemsIndexed(orderedCards.chunked(2), key = { _, row -> row.joinToString("") { c -> c.id } }) { index, row ->
-                        val rowAppear = remember { Animatable(0f) }
-                        LaunchedEffect(Unit) {
-                            delay(index * 45L)
-                            rowAppear.animateTo(
-                                targetValue = 1f,
-                                animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing)
-                            )
-                        }
+                    itemsIndexed(orderedCards.chunked(2), key = { _, row -> row.joinToString("") { c -> c.id } }) { _, row ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 5.dp)
-                                .graphicsLayer {
-                                    alpha = rowAppear.value
-                                    translationY = (1f - rowAppear.value) * 14f
-                                },
+                                .padding(horizontal = 20.dp, vertical = 5.dp),
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             row.forEach { card ->

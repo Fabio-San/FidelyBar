@@ -5,13 +5,11 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.LruCache
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -64,6 +62,9 @@ import java.util.concurrent.Executors
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -88,6 +89,12 @@ fun foregroundFor(background: Color): Color {
 
 object LogoBitmapCache {
     const val DEFAULT_MAX_PX = 2048
+
+    private val _warmupDone = MutableStateFlow(false)
+    val warmupDone: StateFlow<Boolean> = _warmupDone.asStateFlow()
+
+    @Volatile
+    private var warmupStarted = false
 
     // Cache loghi: le bitmap vivono nella memoria nativa (fuori heap), quindi è
 // bene tenerla contenuta e svuotarla quando il sistema segnala scarsità di RAM.
@@ -154,14 +161,29 @@ private val cache = object : LruCache<String, ImageBitmap>(48 * 1024 * 1024) {
         )
     }
 
-    fun warmAll(context: Context) {
+    fun warm(context: Context, presetIds: Collection<String>) {
+        if (warmupStarted) return
+        warmupStarted = true
         val density = context.resources.displayMetrics.density
+        // Bucket effettivamente richiesti dall'app per le carte salvate: icone lista,
+        // griglia compact e card a piena larghezza.
+        val listPx = bucket((46f * density * 2f).roundToInt()).coerceAtMost(DEFAULT_MAX_PX)
         val gridPx = bucket((150f * density * 2f).roundToInt()).coerceAtMost(DEFAULT_MAX_PX)
+        val heroPx = bucket((320f * density * 2f).roundToInt()).coerceAtMost(DEFAULT_MAX_PX)
         Thread(
             {
-                com.card.fidelybar.data.StoreCatalog.all.forEach { preset ->
-                    get(context, preset.id, 256)
-                    get(context, preset.id, gridPx)
+                try {
+                    presetIds.forEach { id ->
+                        get(context, id, 256)
+                        get(context, id, listPx)
+                        get(context, id, gridPx)
+                        get(context, id, heroPx)
+                    }
+                } catch (_: Throwable) {
+                    // Se il prewarm fallisce lo splash non deve restare bloccato:
+                    // la decodifica on-demand coprirà comunque i loghi.
+                } finally {
+                    _warmupDone.value = true
                 }
             },
             "logo-warmup"
@@ -268,15 +290,7 @@ fun LogoOrMonogram(
         AnimatedContent(
             targetState = revealState,
             transitionSpec = {
-                if (targetState == 1) {
-                    (fadeIn(tween(260)) + scaleIn(
-                        initialScale = 0.9f,
-                        animationSpec = tween(260, easing = FastOutSlowInEasing)
-                    ))
-                        .togetherWith(fadeOut(tween(140)))
-                } else {
-                    fadeIn(tween(200)).togetherWith(fadeOut(tween(140)))
-                }
+                fadeIn(tween(200)).togetherWith(fadeOut(tween(140)))
             },
             label = "logoReveal",
             modifier = logoModifier

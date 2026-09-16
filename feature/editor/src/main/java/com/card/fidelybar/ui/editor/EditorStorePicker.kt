@@ -72,7 +72,7 @@ internal fun StorePickerSection(
         label = "storePicker"
     ) { chosen ->
         if (chosen) {
-            WizardStepScroll {
+            WizardStepScroll(bottomSpacer = 0.dp) {
                 SelectedStoreBar(
                     monogram = monogram,
                     logoUrl = logoUrl,
@@ -85,7 +85,7 @@ internal fun StorePickerSection(
                 )
             }
         } else {
-            WizardStepScroll {
+            WizardStepScroll(bottomSpacer = 0.dp) {
                 Box(
                     modifier = Modifier.padding(top = 10.dp, bottom = 6.dp).fillMaxWidth(),
                     contentAlignment = Alignment.CenterStart
@@ -103,7 +103,7 @@ internal fun StorePickerSection(
                     )
                 }
                 val q = query.trim().lowercase()
-                val featuredIds = listOf("conad", "coop", "eurospin", "trony", "crai", "md", "cfadda")
+                val featuredIds = listOf("cfadda", "conad", "coop", "crai", "eurospin", "md", "trony")
                 if (q.isEmpty()) {
                     Text(
                         text = "Più richieste",
@@ -113,6 +113,13 @@ internal fun StorePickerSection(
                     )
                 }
                 Spacer(Modifier.height(4.dp))
+                val presets = StoreCatalog.all
+                    .filter { preset ->
+                        if (q.isEmpty()) preset.id in featuredIds
+                        else preset.name.lowercase().contains(q) ||
+                            preset.searchAliases.any { it.lowercase().contains(q) }
+                    }
+                    .sortedBy { it.name.lowercase() }
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -127,23 +134,15 @@ internal fun StorePickerSection(
                             onClick = onSelectCustom
                         )
                     }
-                    StoreCatalog.all.forEach { preset ->
-                        val matches = if (q.isEmpty()) {
-                            preset.id in featuredIds
-                        } else {
-                            preset.name.lowercase().contains(q) ||
-                                preset.searchAliases.any { it.lowercase().contains(q) }
-                        }
-                        if (matches) {
-                            StoreChip(
-                                label = preset.name,
-                                monogram = preset.monogram,
-                                primaryHex = preset.primaryColorHex,
-                                selected = false,
-                                logoKey = preset.id,
-                                onClick = { onSelectPreset(preset) }
-                            )
-                        }
+                    presets.forEach { preset ->
+                        StoreChip(
+                            label = preset.name,
+                            monogram = preset.monogram,
+                            primaryHex = preset.primaryColorHex,
+                            selected = false,
+                            logoKey = preset.id,
+                            onClick = { onSelectPreset(preset) }
+                        )
                     }
                 }
                 Spacer(Modifier.height(12.dp))

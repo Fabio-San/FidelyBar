@@ -22,7 +22,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -76,7 +75,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.text.font.FontWeight
@@ -95,7 +96,7 @@ import com.card.fidelybar.data.UserCard
 import com.card.fidelybar.ui.components.CardCodeView
 import com.card.fidelybar.ui.components.CardVisual
 import com.card.fidelybar.ui.components.LogoPalette
-import com.card.fidelybar.ui.components.customPalette
+import com.card.fidelybar.ui.components.customDefaultPalette
 import com.card.fidelybar.ui.components.rememberImeVisible
 import com.card.fidelybar.ui.theme.FidelyBackgroundBrush
 import kotlinx.coroutines.Dispatchers
@@ -124,8 +125,8 @@ fun EditorScreen(
     var number by rememberSaveable { mutableStateOf("") }
     var presetId by rememberSaveable { mutableStateOf<String?>(null) }
     var format by rememberSaveable { mutableStateOf(BarcodeFormatType.CODE_128) }
-    var primaryHex by rememberSaveable { mutableStateOf(customPalette.first().primary) }
-    var secondaryHex by rememberSaveable { mutableStateOf(customPalette.first().secondary) }
+    var primaryHex by rememberSaveable { mutableStateOf(customDefaultPalette.primary) }
+    var secondaryHex by rememberSaveable { mutableStateOf(customDefaultPalette.secondary) }
     var monogram by rememberSaveable { mutableStateOf('\u03A6') }
     var logoUrl by rememberSaveable { mutableStateOf<String?>(null) }
     var isCustomColor by rememberSaveable { mutableStateOf(true) }
@@ -259,8 +260,8 @@ fun EditorScreen(
     fun selectCustom() {
         presetId = null
         format = BarcodeFormatType.CODE_128
-        primaryHex = customPalette.first().primary
-        secondaryHex = customPalette.first().secondary
+        primaryHex = customDefaultPalette.primary
+        secondaryHex = customDefaultPalette.secondary
         monogram = '\u03A6'
         logoUrl = null
         isCustomColor = true
@@ -321,8 +322,8 @@ fun EditorScreen(
         number = ""
         presetId = null
         format = BarcodeFormatType.CODE_128
-        primaryHex = customPalette.first().primary
-        secondaryHex = customPalette.first().secondary
+        primaryHex = customDefaultPalette.primary
+        secondaryHex = customDefaultPalette.secondary
         monogram = '\u03A6'
         logoUrl = null
         isCustomColor = true
@@ -369,20 +370,28 @@ fun EditorScreen(
         if (!isImmersiveSearch) editorScroll.animateScrollTo(0)
     }
 
-    BoxWithConstraints(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(FidelyBackgroundBrush())
     ) {
-        val minContentHeight = maxHeight + 1.dp
+        var scrollViewportPx by rememberSaveable { mutableIntStateOf(0) }
+        val density = LocalDensity.current
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(editorScroll)
                 .let { if (inSheet) it else it.navigationBarsPadding() }
                 .let { if (inSheet) it else it.imePadding() }
+                .onSizeChanged { scrollViewportPx = it.height }
+                .verticalScroll(editorScroll)
         ) {
-            Column(modifier = Modifier.defaultMinSize(minHeight = minContentHeight)) {
+            Column(
+                // Tutti gli step (negozio incluso: solo le 8 schede + barra di ricerca) sono
+                // allineati al viewport reale dello scroll + un epsilon minimo di 1.dp: il range
+                // è di fatto nullo (spostamento massimo impercettibile), ma il verticalScroll
+                // mantiene il bounce/overscroll ai bordi, che su Android non si attiva con range 0.
+                modifier = Modifier.defaultMinSize(minHeight = with(density) { scrollViewportPx.toDp() + 1.dp })
+            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -423,6 +432,7 @@ fun EditorScreen(
                                 card = previewCard,
                                 onClick = { if (step == 0 && storeChosen) storeChosen = false },
                                 elevation = 1.dp,
+                                compact = step > 0,
                                 modifier = Modifier.fillMaxWidth()
                             )
                             if (step == 0 && storeChosen) {
@@ -487,7 +497,7 @@ fun EditorScreen(
                                 subtitle = format.label,
                                 primaryHex = primaryHex,
                                 storeId = if (isCustom) null else presetId,
-                                customPalettePrimary = customPalette.first().primary,
+                                customPalettePrimary = customDefaultPalette.primary,
                                 query = query,
                                 onQueryChange = { query = it },
                                 onFocusChanged = { isSearchFocused = it },
