@@ -7,6 +7,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -27,7 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInWindow
@@ -51,6 +53,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -76,6 +79,7 @@ import com.card.fidelybar.ui.components.CardVisual
 import com.card.fidelybar.ui.components.foregroundFor
 import com.card.fidelybar.ui.components.rememberColor
 import com.card.fidelybar.ui.theme.FidelyBackgroundBrush
+import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(
@@ -86,6 +90,7 @@ fun HomeScreen(
 ) {
     val cards by viewModel.cards.collectAsStateWithLifecycle()
     val loadFailed by viewModel.loadFailed.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val orderedCards = remember(cards) {
         cards.sortedWith(compareBy { !it.isFavorite })
     }
@@ -172,7 +177,10 @@ fun HomeScreen(
                     onOpenSettings = onOpenSettings,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)
                 )
-                if (loadFailed && cards.isEmpty()) {
+                if (isLoading && cards.isEmpty()) {
+                    // Primo frame o retry: mai mostrare EmptyHome, solo lo sfondo.
+                    Spacer(Modifier.weight(1f))
+                } else if (loadFailed && cards.isEmpty()) {
                     LoadErrorBanner(
                         onRetry = { viewModel.retryLoad() },
                         onDismiss = { viewModel.acknowledgeLoadError() },
@@ -209,11 +217,23 @@ fun HomeScreen(
                         )
                     }
 
-                    items(orderedCards.chunked(2), key = { it.joinToString("") { c -> c.id } }) { row ->
+                    itemsIndexed(orderedCards.chunked(2), key = { _, row -> row.joinToString("") { c -> c.id } }) { index, row ->
+                        val rowAppear = remember { Animatable(0f) }
+                        LaunchedEffect(Unit) {
+                            delay(index * 45L)
+                            rowAppear.animateTo(
+                                targetValue = 1f,
+                                animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing)
+                            )
+                        }
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 5.dp),
+                                .padding(horizontal = 20.dp, vertical = 5.dp)
+                                .graphicsLayer {
+                                    alpha = rowAppear.value
+                                    translationY = (1f - rowAppear.value) * 14f
+                                },
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             row.forEach { card ->

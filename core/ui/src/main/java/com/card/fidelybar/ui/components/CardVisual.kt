@@ -4,10 +4,15 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.LruCache
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -246,24 +251,34 @@ fun LogoOrMonogram(
             logoUrl != null -> logoUrl
             else -> null
         }
-        val crossfadeState = if (currentLogo != null) 1 else if (model != null) 2 else 0
+        val revealState = if (currentLogo != null) 1 else if (model != null) 2 else 0
         val logoModifier = Modifier
             .matchParentSize()
             .then(
                 if (circle) Modifier.padding(if (borderWhite) 3.dp else 5.dp)
                 else Modifier
             )
-        // L'ultimo bitmap valido viene conservato: durante la Crossfade il contenuto
+        // L'ultimo bitmap valido viene conservato: durante la transizione il contenuto
         // uscente viene ricomposto e, se intanto logoKey è diventato null (es. reset
         // dell'editor), currentLogo sarebbe null -> NPE. Foto che svanisce pulita.
         var lastLogo by remember { mutableStateOf<ImageBitmap?>(null) }
         LaunchedEffect(currentLogo) {
             if (currentLogo != null) lastLogo = currentLogo
         }
-        Crossfade(
-            targetState = crossfadeState,
-            animationSpec = tween(durationMillis = 120),
-            label = "logoCrossfade",
+        AnimatedContent(
+            targetState = revealState,
+            transitionSpec = {
+                if (targetState == 1) {
+                    (fadeIn(tween(260)) + scaleIn(
+                        initialScale = 0.9f,
+                        animationSpec = tween(260, easing = FastOutSlowInEasing)
+                    ))
+                        .togetherWith(fadeOut(tween(140)))
+                } else {
+                    fadeIn(tween(200)).togetherWith(fadeOut(tween(140)))
+                }
+            },
+            label = "logoReveal",
             modifier = logoModifier
         ) { target ->
             when (target) {
