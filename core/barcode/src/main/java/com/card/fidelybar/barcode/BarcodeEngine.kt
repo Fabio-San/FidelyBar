@@ -1,6 +1,7 @@
 package com.card.fidelybar.barcode
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color as AndroidColor
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.scale
@@ -213,12 +214,36 @@ object BarcodeEngine {
         }
     }
 
+    /** Decodifica un'immagine da bytes scalandola sotto maxDim prima di allocarla (anti-OOM). */
+    fun decodeScaled(bytes: ByteArray, maxDim: Int = 1600): Bitmap? {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+        var sample = 1
+        val largest = max(bounds.outWidth, bounds.outHeight)
+        while (largest / (sample * 2) >= maxDim && sample < 32) sample *= 2
+        val options = BitmapFactory.Options().apply { inSampleSize = sample }
+        return runCatching {
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+        }.getOrNull()
+    }
+
     /** Prova a leggere un codice a barre/QR da una bitmap (foto o galleria). */
     fun decode(bitmap: Bitmap): DecodeResult? {
         val normalized = downscaleIfNeeded(bitmap)
-        listOf(0f, 90f, 180f, 270f).forEach { angle ->
-            val candidate = if (angle == 0f) normalized else rotate(normalized, angle)
-            decodeOnce(candidate)?.let { return it }
+        try {
+            listOf(0f, 90f, 180f, 270f).forEach { angle ->
+                val candidate = if (angle == 0f) normalized else rotate(normalized, angle)
+                try {
+                    decodeOnce(candidate)?.let { return it }
+                } finally {
+                    // Le rotazioni creano bitmap temporanee: riciclate dopo l'uso.
+                    if (angle != 0f && candidate !== normalized) candidate.recycle()
+                }
+            }
+        } finally {
+            // Il downscale può produrre una copia: la si libera; l'originale resta al chiamante.
+            if (normalized !== bitmap) normalized.recycle()
         }
         return null
     }

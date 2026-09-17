@@ -3,7 +3,7 @@ package com.card.fidelybar.ui.editor
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -20,6 +20,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -116,7 +117,8 @@ fun EditorScreen(
     cardId: String?,
     onBack: () -> Unit,
     onSaved: () -> Unit,
-    inSheet: Boolean = false
+    inSheet: Boolean = false,
+    active: Boolean = true
 ) {
     val cards by viewModel.cards.collectAsStateWithLifecycle()
     val editingCard = cardId?.let { id -> cards.firstOrNull { it.id == id } }
@@ -245,14 +247,19 @@ fun EditorScreen(
         }
     }
 
+    BackHandler(enabled = active && step > 0) { step -= 1 }
+
     val galleryLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null) {
             scope.launch(Dispatchers.IO) {
-                val bitmap = context.contentResolver.openInputStream(uri)?.use {
-                    BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = 2 })
+                val bytes = context.contentResolver.openInputStream(uri)?.use {
+                    it.readBytes()
                 }
+                // Decodifica con inSampleSize calcolato dai bounds: le foto moderne ad alta
+                // risoluzione non vengono mai allocate intere in RAM (anti-OutOfMemory).
+                val bitmap = bytes?.let { BarcodeEngine.decodeScaled(it) }
                 withContext(Dispatchers.Main) { applyScan(bitmap) }
             }
         }
@@ -317,7 +324,7 @@ fun EditorScreen(
                         presetId = if (isCustom) null else presetId,
                         title = effectiveTitle,
                         number = normalized,
-                        format = format,
+                        format = resolvedFormat,
                         primaryHex = primaryHex,
                         secondaryHex = secondaryHex,
                         monogram = effectiveMonogram,
@@ -456,26 +463,29 @@ fun EditorScreen(
                             )
                             if (step == 0 && storeChosen) {
                                 Surface(
-                                    shape = RoundedCornerShape(10.dp),
+                                    shape = RoundedCornerShape(24.dp),
                                     color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
                                     modifier = Modifier
                                         .align(Alignment.BottomEnd)
-                                        .padding(end = 8.dp, bottom = 24.dp)
+                                        .padding(end = 8.dp, bottom = 12.dp)
+                                        .clickable { storeChosen = false }
                                 ) {
                                     Row(
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        modifier = Modifier
+                                            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                                            .padding(horizontal = 12.dp, vertical = 4.dp),
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
                                         Icon(
                                             Icons.Filled.Edit,
                                             contentDescription = null,
-                                            modifier = Modifier.size(12.dp),
+                                            modifier = Modifier.size(16.dp),
                                             tint = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
                                             "Cambia",
-                                            style = MaterialTheme.typography.labelSmall,
+                                            style = MaterialTheme.typography.labelMedium,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                     }

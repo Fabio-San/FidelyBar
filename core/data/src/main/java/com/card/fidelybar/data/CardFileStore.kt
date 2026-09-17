@@ -48,6 +48,11 @@ class CardFileStore(context: Context) {
         prettyPrint = false
     }
 
+    // Le scritture (tap rapidi su preferiti, import, ecc.) partono da più coroutine su
+    // Dispatchers.IO: il monitor serializza gli accessi a tmp/main/bak evitando che due
+    // save() si sovrascrivano a vicenda (delete+riscrittura interleaved).
+    private val saveLock = Any()
+
     fun load(): List<UserCard> {
         if (!file.exists()) return emptyList()
         return when (val result = loadWithResult()) {
@@ -62,7 +67,14 @@ class CardFileStore(context: Context) {
     }
 
     fun loadWithResult(): LoadResult {
-        if (!file.exists()) return LoadResult.Empty
+        // Se il file principale non esiste (es. crash nel mezzo del salvataggio tra
+        // l'eliminazione e la riscrittura) proviamo comunque a recuperare da temp/bak
+        // prima di dichiarare la lista vuota.
+        if (!file.exists()) {
+            val recovered = recoverFromFallbacks()
+            if (recovered != null) return recovered
+            return LoadResult.Empty
+        }
 
         // Tentativo 1: leggi file criptato
         val encrypted = readEncrypted()
@@ -87,6 +99,21 @@ class CardFileStore(context: Context) {
         }
 
         return LoadResult.Error("File corrotto: impossibile leggere le carte")
+    }
+
+    /** Recupero d'emergenza quando il file principale manca ma esiste ancora temp/bak. */
+    private fun recoverFromFallbacks(): LoadResult? {
+        val fromTemp = readFromTemp()
+        if (fromTemp != null) {
+            save(fromTemp)
+            return LoadResult.Migrated(fromTemp)
+        }
+        val fromBackup = readFromBackup()
+        if (fromBackup != null) {
+            save(fromBackup)
+            return LoadResult.Migrated(fromBackup)
+        }
+        return null
     }
 
     private fun readEncrypted(): LoadResult? {
@@ -140,8 +167,8 @@ class CardFileStore(context: Context) {
         }
     }
 
-    fun save(cards: List<UserCard>): Boolean {
-        return try {
+    fun save(cards: List<UserCard>): Boolean = synchronized(saveLock) {
+        try {
             val sorted = cards.sortedWith(
                 compareBy({ it.isFavorite.not() }, { it.sortOrder }, { it.createdAt })
             )

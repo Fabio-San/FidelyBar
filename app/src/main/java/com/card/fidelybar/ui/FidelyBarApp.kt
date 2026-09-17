@@ -127,6 +127,7 @@ fun FidelyBarApp(viewModel: FidelyBarViewModel) {
                             viewModel = viewModel,
                             cardId = editor?.cardId,
                             inSheet = false,
+                            active = editor != null,
                             onBack = { dismissWithImeHandoff { editor = null } },
                             onSaved = { dismissWithImeHandoff { editor = null } }
                         )

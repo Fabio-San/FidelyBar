@@ -6,10 +6,14 @@
          dispositivo usa "Backup e ripristino" → export con password. -->
     <cloud-backup>
         <exclude domain="file" path="fidelybar_cards.json"/>
+        <exclude domain="file" path="fidelybar_cards.json.bak"/>
+        <exclude domain="file" path="fidelybar_cards.json.tmp"/>
         <exclude domain="file" path="logos/"/>
         <exclude domain="sharedpref" path="fidelybar_settings.xml"/>
     </cloud-backup>
     <device-transfer>
         <exclude domain="file" path="fidelybar_cards.json"/>
+        <exclude domain="file" path="fidelybar_cards.json.bak"/>
+        <exclude domain="file" path="fidelybar_cards.json.tmp"/>
     </device-transfer>
 </data-extraction-rules>

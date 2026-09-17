@@ -5,6 +5,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
 import java.security.MessageDigest
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -15,7 +16,14 @@ import kotlinx.coroutines.withContext
  */
 object LogoCache {
 
-    private val client by lazy { OkHttpClient() }
+    private const val MAX_BYTES = 2 * 1024 * 1024
+
+    private val client by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(10, TimeUnit.SECONDS)
+            .build()
+    }
 
     val SUPPORTED_EXTENSIONS = setOf("png", "jpg", "jpeg", "webp", "gif")
 
@@ -32,14 +40,18 @@ object LogoCache {
     suspend fun ensure(context: Context, url: String): File? = withContext(Dispatchers.IO) {
         fileFor(context, url)?.let { return@withContext it }
         val name = sanitize(url) ?: return@withContext null
+        // Solo connessioni HTTPS: niente loghi (o redirect) su plain HTTP.
+        if (!url.startsWith("https://")) return@withContext null
         runCatching {
             dir(context).mkdirs()
             val request = Request.Builder().url(url).build()
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) return@runCatching null
-                val body = response.body
-                val bytes = body?.bytes() ?: return@runCatching null
-                if (bytes.isEmpty()) return@runCatching null
+                val body = response.body ?: return@runCatching null
+                // Limita lo stream a MAX_BYTES: evita download enormi da server malevoli.
+                if (body.contentLength() > MAX_BYTES) return@runCatching null
+                val bytes = body.bytes()
+                if (bytes.isEmpty() || bytes.size > MAX_BYTES) return@runCatching null
                 val file = File(dir(context), name)
                 file.writeBytes(bytes)
                 file

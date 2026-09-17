@@ -3,6 +3,7 @@
     <!-- Le carte restano solo sul dispositivo (privacy): escluse dal backup cloud. -->
     <exclude domain="file" path="fidelybar_cards.json"/>
     <exclude domain="file" path="fidelybar_cards.json.bak"/>
+    <exclude domain="file" path="fidelybar_cards.json.tmp"/>
     <exclude domain="file" path="logos/"/>
     <exclude domain="sharedpref" path="fidelybar_settings.xml"/>
 </full-backup-content>

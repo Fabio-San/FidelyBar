@@ -237,8 +237,17 @@ fun CardDetailScreen(
             text = { Text("Vuoi eliminare definitivamente «${card.title}»?") },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.deleteCard(card.id)
-                    onClose()
+                    if (exiting) return@TextButton
+                    // Avvia l'animazione di uscita e solo al termine elimina la carta:
+                    // altrimenti card==null farebbe sparire la schermata all'istante
+                    // (catch sul `card ?: return`) saltando la chiusura fluida.
+                    showDeleteDialog = false
+                    exiting = true
+                    scope.launch {
+                        expand.animateTo(0f, exitSpec)
+                        viewModel.deleteCard(card.id)
+                        onClose()
+                    }
                 }) {
                     Text("Elimina", color = MaterialTheme.colorScheme.error)
                 }
