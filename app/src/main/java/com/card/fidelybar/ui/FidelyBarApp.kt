@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -45,6 +46,7 @@ private data class DetailRequest(val cardId: String, val sourceRect: Rect?)
 @Composable
 fun FidelyBarApp(viewModel: FidelyBarViewModel) {
     var editor by remember { mutableStateOf<EditorRequest?>(null) }
+    var editorOpenId by remember { mutableStateOf(0) }
     var showSettings by remember { mutableStateOf(false) }
     var detail by remember { mutableStateOf<DetailRequest?>(null) }
     var forceShowOnboarding by remember { mutableStateOf(false) }
@@ -92,7 +94,10 @@ fun FidelyBarApp(viewModel: FidelyBarViewModel) {
                 HomeScreen(
                     viewModel = viewModel,
                     onOpenCard = { id, source -> detail = DetailRequest(id, source) },
-                    onAddCard = { editor = EditorRequest(null) },
+                    onAddCard = {
+                        editorOpenId++
+                        editor = EditorRequest(null)
+                    },
                     onOpenSettings = { showSettings = true }
                 )
 
@@ -104,6 +109,7 @@ fun FidelyBarApp(viewModel: FidelyBarViewModel) {
                         onClose = { detail = null },
                         onEdit = { id ->
                             detail = null
+                            editorOpenId++
                             editor = EditorRequest(id)
                         }
                     )
@@ -113,13 +119,18 @@ fun FidelyBarApp(viewModel: FidelyBarViewModel) {
                 // sempre composte anche da chiuse: pre-riscaldano e l'uscita è animata
                 // con la stessa molla dell'ingresso.
                 FullScreenHost(visible = editor != null, onDismiss = { dismissWithImeHandoff { editor = null } }) {
-                    EditorScreen(
-                        viewModel = viewModel,
-                        cardId = editor?.cardId,
-                        inSheet = false,
-                        onBack = { dismissWithImeHandoff { editor = null } },
-                        onSaved = { dismissWithImeHandoff { editor = null } }
-                    )
+                    // key(): a ogni apertura (contatore incrementato) lo stato rememberSaveable
+                    // dell'editor viene smontato e ricreato, evitando di riproporre i dati della
+                    // card precedente quando si tocca "Nuova carta" dopo averne completata una.
+                    key(editorOpenId) {
+                        EditorScreen(
+                            viewModel = viewModel,
+                            cardId = editor?.cardId,
+                            inSheet = false,
+                            onBack = { dismissWithImeHandoff { editor = null } },
+                            onSaved = { dismissWithImeHandoff { editor = null } }
+                        )
+                    }
                 }
 
                 FullScreenHost(visible = showSettings, onDismiss = { showSettings = false }) {
