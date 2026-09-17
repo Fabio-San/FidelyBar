@@ -30,8 +30,74 @@ object BarcodeEngine {
             BarcodeFormatType.EAN13 -> return normalizeEan(content, 13)
             BarcodeFormatType.EAN8 -> return normalizeEan(content, 8)
             BarcodeFormatType.UPC_A -> return normalizeUpc(content)
-            else -> return content.trim()
+            BarcodeFormatType.ITF -> return normalizeItf(content)
+            else -> return content.trim()   // CODE_128, CODE_39, CODABAR, DATA_MATRIX, QR_CODE passano con trim
         }
+    }
+
+    /**
+     * Riconosce il formato più probabile dal solo contenuto (per incolla/digitazione).
+     * Restituisce null se il contenuto è vuoto. Per EAN/UPC/EAN-8 verifica la cifra di
+     * controllo: riconosce cioè il formato solo quando il valore è coerente.
+     */
+    fun detectFormat(content: String): BarcodeFormatType? {
+        val t = content.trim()
+        if (t.isEmpty()) return null
+        return when {
+            t.all { it.isDigit() } -> detectNumericFormat(t)
+            isCodabar(t) -> BarcodeFormatType.CODABAR
+            isCode39(t) -> BarcodeFormatType.CODE_39
+            else -> BarcodeFormatType.CODE_128
+        }
+    }
+
+    /** Riconosce e normalizza in un colpo solo: utile per la modalità "Automatico". */
+    fun normalizeAuto(content: String): String {
+        val format = detectFormat(content) ?: BarcodeFormatType.CODE_128
+        return normalize(content, format)
+    }
+
+    private fun detectNumericFormat(t: String): BarcodeFormatType = when (t.length) {
+        13 -> if (hasValidCheck(t, startWeight1 = true)) BarcodeFormatType.EAN13 else BarcodeFormatType.CODE_128
+        12 -> {
+            // 12 cifre: se la cifra di controllo UPC è valida è un UPC-A; altrimenti è un EAN-13
+            // senza cifra di controllo (es. numero incollato). L'EAN-13 corpo accetta 12 cifre.
+            if (hasValidCheck(t, startWeight1 = false)) BarcodeFormatType.UPC_A else BarcodeFormatType.EAN13
+        }
+        11 -> {
+            // 11 cifre: corpo UPC-A senza cifra di controllo (che verrà aggiunta).
+            BarcodeFormatType.UPC_A
+        }
+        8 -> if (hasValidCheck(t, startWeight1 = true)) BarcodeFormatType.EAN8 else BarcodeFormatType.CODE_128
+        7 -> {
+            // 7 cifre: corpo EAN-8 senza cifra di controllo.
+            BarcodeFormatType.EAN8
+        }
+        else -> {
+            // ITF richiede un numero pari di cifre; i codici corti numerici pari
+            // (es. tessere fedeltà) sono spesso ITF. Altrimenti Code 128 numerico.
+            if (t.length % 2 == 0 && t.length in 6..24) BarcodeFormatType.ITF else BarcodeFormatType.CODE_128
+        }
+    }
+
+    private fun hasValidCheck(digits: String, startWeight1: Boolean): Boolean {
+        if (digits.isEmpty()) return false
+        return digits.last().digitToInt() == eanCheckDigit(digits.dropLast(1), startWeight1).digitToInt()
+    }
+
+    private fun isCode39(s: String): Boolean {
+        val allowed = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ -.$/+%"
+        return s.length in 1..31 && s.all { it in allowed }
+    }
+
+    private fun isCodabar(s: String): Boolean {
+        if (s.length < 4) return false
+        val start = s.first()
+        val end = s.last()
+        if (start !in "ABCD" || end !in "ABCD") return false
+        val body = s.drop(1).dropLast(1)
+        val allowed = "0123456789-\$:/.+"
+        return body.isNotEmpty() && body.all { it in allowed }
     }
 
     fun expectedDigits(format: BarcodeFormatType): Int? = when (format) {
@@ -46,6 +112,20 @@ object BarcodeEngine {
         BarcodeFormatType.EAN8 -> content.length == 7
         BarcodeFormatType.UPC_A -> content.length == 11
         else -> false
+    }
+
+    private fun normalizeItf(content: String): String {
+        val digits = content.trim()
+        require(digits.all { it.isDigit() }) {
+            "Il numero ITF deve contenere solo cifre."
+        }
+        require(digits.length % 2 == 0) {
+            "L'ITF richiede un numero pari di cifre."
+        }
+        require(digits.length in 4..80) {
+            "L'ITF richiede tra 4 e 80 cifre."
+        }
+        return digits
     }
 
     private fun normalizeEan(content: String, length: Int): String {
@@ -110,6 +190,8 @@ object BarcodeEngine {
             BarcodeFormatType.CODE_128 -> BarcodeFormat.CODE_128
             BarcodeFormatType.CODE_39 -> BarcodeFormat.CODE_39
             BarcodeFormatType.CODABAR -> BarcodeFormat.CODABAR
+            BarcodeFormatType.ITF -> BarcodeFormat.ITF
+            BarcodeFormatType.DATA_MATRIX -> BarcodeFormat.DATA_MATRIX
             BarcodeFormatType.QR_CODE -> BarcodeFormat.QR_CODE
         }
 
@@ -175,6 +257,8 @@ object BarcodeEngine {
                     BarcodeFormat.CODE_128,
                     BarcodeFormat.CODE_39,
                     BarcodeFormat.CODABAR,
+                    BarcodeFormat.ITF,
+                    BarcodeFormat.DATA_MATRIX,
                     BarcodeFormat.QR_CODE
                 )
             )
@@ -195,6 +279,8 @@ object BarcodeEngine {
         BarcodeFormat.CODE_128 -> BarcodeFormatType.CODE_128
         BarcodeFormat.CODE_39 -> BarcodeFormatType.CODE_39
         BarcodeFormat.CODABAR -> BarcodeFormatType.CODABAR
+        BarcodeFormat.ITF -> BarcodeFormatType.ITF
+        BarcodeFormat.DATA_MATRIX -> BarcodeFormatType.DATA_MATRIX
         BarcodeFormat.QR_CODE -> BarcodeFormatType.QR_CODE
         else -> BarcodeFormatType.CODE_128
     }

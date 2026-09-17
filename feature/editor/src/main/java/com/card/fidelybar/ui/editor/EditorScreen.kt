@@ -125,6 +125,7 @@ fun EditorScreen(
     var number by rememberSaveable { mutableStateOf("") }
     var presetId by rememberSaveable { mutableStateOf<String?>(null) }
     var format by rememberSaveable { mutableStateOf(BarcodeFormatType.CODE_128) }
+    var formatAuto by rememberSaveable { mutableStateOf(true) }
     var primaryHex by rememberSaveable { mutableStateOf(customDefaultPalette.primary) }
     var secondaryHex by rememberSaveable { mutableStateOf(customDefaultPalette.secondary) }
     var monogram by rememberSaveable { mutableStateOf('\u03A6') }
@@ -149,6 +150,7 @@ fun EditorScreen(
         number = c.number
         presetId = c.presetId
         format = c.format
+        formatAuto = false
         primaryHex = c.primaryColorHex
         secondaryHex = c.secondaryColorHex
         monogram = c.monogram
@@ -161,11 +163,22 @@ fun EditorScreen(
 
     val isCustom = presetId == null || presetId == StorePreset.CUSTOM
 
+    // In modalità automatica il formato si deduce dal contenuto; in modalità esplicita
+    // si usa quello scelto. Rilevato una volta e riusato per preview/validazione/salvataggio.
+    val detectedFormat = if (formatAuto) BarcodeEngine.detectFormat(number) else null
+    val effectiveFormat = detectedFormat ?: format
+
     var validationError by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(number, format) {
-        validationError = runCatching { BarcodeEngine.normalize(number, format) }
-            .exceptionOrNull()
-            ?.message
+    LaunchedEffect(number, format, formatAuto) {
+        validationError = if (formatAuto) {
+            runCatching { BarcodeEngine.normalizeAuto(number) }
+                .exceptionOrNull()
+                ?.message
+        } else {
+            runCatching { BarcodeEngine.normalize(number, format) }
+                .exceptionOrNull()
+                ?.message
+        }
     }
 
     val saveEnabled = number.isNotBlank() && validationError == null
@@ -179,9 +192,11 @@ fun EditorScreen(
         if (detectedFormat == BarcodeFormatType.UPC_A) {
             number = "0$value"
             format = BarcodeFormatType.EAN13
+            formatAuto = false
         } else {
             number = value
             format = detectedFormat
+            formatAuto = false
         }
         scanStatus = null
     }
@@ -246,6 +261,7 @@ fun EditorScreen(
     fun selectPreset(preset: StorePreset) {
         presetId = preset.id
         format = preset.format
+        formatAuto = false
         primaryHex = preset.primaryColorHex
         secondaryHex = preset.secondaryColorHex
         monogram = preset.monogram
@@ -260,6 +276,7 @@ fun EditorScreen(
     fun selectCustom() {
         presetId = null
         format = BarcodeFormatType.CODE_128
+        formatAuto = true
         primaryHex = customDefaultPalette.primary
         secondaryHex = customDefaultPalette.secondary
         monogram = '\u03A6'
@@ -273,7 +290,8 @@ fun EditorScreen(
 
     fun save() {
         if (saving) return
-        val normalized = BarcodeEngine.normalize(number, format)
+        val resolvedFormat = if (formatAuto) effectiveFormat else format
+        val normalized = BarcodeEngine.normalize(number, resolvedFormat)
         val effectiveTitle = title.trim().ifEmpty { "Carta senza nome" }
         val effectiveMonogram = if (monogram.isLetter()) monogram else (effectiveTitle.firstOrNull() ?: '\u03A6')
         saving = true
@@ -285,7 +303,7 @@ fun EditorScreen(
                             presetId = if (isCustom) null else presetId,
                             title = effectiveTitle,
                             number = normalized,
-                            format = format,
+                            format = resolvedFormat,
                             primaryColorHex = primaryHex,
                             secondaryColorHex = secondaryHex,
                             monogram = effectiveMonogram,
@@ -322,6 +340,7 @@ fun EditorScreen(
         number = ""
         presetId = null
         format = BarcodeFormatType.CODE_128
+        formatAuto = true
         primaryHex = customDefaultPalette.primary
         secondaryHex = customDefaultPalette.secondary
         monogram = '\u03A6'
@@ -345,7 +364,7 @@ fun EditorScreen(
         presetId = if (isCustom) null else presetId,
         title = title.ifBlank { fallbackTitle },
         number = number,
-        format = format,
+        format = effectiveFormat,
         primaryColorHex = primaryHex,
         secondaryColorHex = secondaryHex,
         monogram = monogram,
@@ -494,7 +513,7 @@ fun EditorScreen(
                                 monogram = if (isCustom) '\u03A6' else monogram,
                                 logoUrl = if (isCustom) null else logoUrl,
                                 name = fallbackTitle,
-                                subtitle = format.label,
+                                subtitle = if (formatAuto) "Formato automatico" else format.label,
                                 primaryHex = primaryHex,
                                 storeId = if (isCustom) null else presetId,
                                 customPalettePrimary = customDefaultPalette.primary,
@@ -508,14 +527,28 @@ fun EditorScreen(
                             1 -> WizardStepScroll {
                                 CodeStepContent(
                                     number = number,
-                                    format = format,
+                                    format = effectiveFormat,
+                                    formatAuto = formatAuto,
                                     onNumberChange = { raw ->
-                                        number = when (format) {
-                                            BarcodeFormatType.QR_CODE -> raw
-                                            else -> raw.filter { it.isDigit() }.take(BarcodeEngine.expectedDigits(format) ?: 40)
+                                        number = when {
+                                            // In automatico lascio passare tutto (alfanumerico
+                                            // incluso, serve per Code 39/128/Codabar): il riconoscimento
+                                            // del formato avviene dopo, sul contenuto reale.
+                                            formatAuto -> raw.take(48)
+                                            else -> when (format) {
+                                                BarcodeFormatType.EAN13, BarcodeFormatType.EAN8,
+                                                BarcodeFormatType.UPC_A, BarcodeFormatType.ITF ->
+                                                    raw.filter { it.isDigit() }
+                                                        .take(BarcodeEngine.expectedDigits(format) ?: 40)
+                                                else -> raw.take(48)
+                                            }
                                         }
                                     },
-                                    onFormatChange = { format = it },
+                                    onFormatChange = {
+                                        format = it
+                                        formatAuto = false
+                                    },
+                                    onAutoFormatChange = { formatAuto = true },
                                     showFormatPicker = showFormatPicker,
                                     onToggleFormatPicker = { showFormatPicker = !showFormatPicker },
                                     scanStatus = scanStatus,
@@ -740,8 +773,10 @@ fun EditorScreen(
 private fun CodeStepContent(
     number: String,
     format: BarcodeFormatType,
+    formatAuto: Boolean,
     onNumberChange: (String) -> Unit,
     onFormatChange: (BarcodeFormatType) -> Unit,
+    onAutoFormatChange: () -> Unit,
     showFormatPicker: Boolean,
     onToggleFormatPicker: () -> Unit,
     scanStatus: String?,
@@ -761,8 +796,15 @@ private fun CodeStepContent(
                 isError = validationError != null,
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = if (format == BarcodeFormatType.QR_CODE) KeyboardType.Text
-                    else KeyboardType.NumberPassword
+                    keyboardType = when {
+                        formatAuto -> KeyboardType.Text
+                        format == BarcodeFormatType.QR_CODE -> KeyboardType.Text
+                        format == BarcodeFormatType.EAN13 ||
+                            format == BarcodeFormatType.EAN8 ||
+                            format == BarcodeFormatType.UPC_A ||
+                            format == BarcodeFormatType.ITF -> KeyboardType.NumberPassword
+                        else -> KeyboardType.Text
+                    }
                 ),
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.weight(1f)
@@ -796,9 +838,14 @@ private fun CodeStepContent(
                 .padding(horizontal = 4.dp)
         ) {
             Text(
-                text = validationError ?: when (format) {
+                text = validationError ?: if (formatAuto) {
+                    if (number.isBlank()) "Riconoscimento automatico del tipo di codice"
+                    else if (format == BarcodeFormatType.QR_CODE) format.label
+                    else "Riconosciuto: ${format.label}"
+                } else when (format) {
                     BarcodeFormatType.EAN13, BarcodeFormatType.UPC_A -> "12 o 13 cifre"
                     BarcodeFormatType.EAN8 -> "7 o 8 cifre"
+                    BarcodeFormatType.ITF -> "solo cifre, numero pari"
                     else -> "Formato: ${format.label}"
                 },
                 style = MaterialTheme.typography.bodySmall,
@@ -816,8 +863,17 @@ private fun CodeStepContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                val autoSelected = formatAuto
+                FilterChip(
+                    selected = autoSelected,
+                    onClick = onAutoFormatChange,
+                    label = { Text("Automatico") },
+                    leadingIcon = if (autoSelected) {
+                        { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                    } else null
+                )
                 BarcodeFormatType.entries.forEach { f ->
-                    val selected = format == f
+                    val selected = !formatAuto && format == f
                     FilterChip(
                         selected = selected,
                         onClick = { onFormatChange(f) },

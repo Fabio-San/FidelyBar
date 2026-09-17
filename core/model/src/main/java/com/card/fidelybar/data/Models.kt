@@ -10,6 +10,8 @@ enum class BarcodeFormatType(val label: String) {
     CODE_128("Code 128"),
     CODE_39("Code 39"),
     CODABAR("Codabar"),
+    ITF("ITF"),
+    DATA_MATRIX("Data Matrix"),
     QR_CODE("QR Code")
 }
 

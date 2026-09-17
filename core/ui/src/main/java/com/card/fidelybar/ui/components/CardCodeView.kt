@@ -28,10 +28,11 @@ fun CardCodeView(
     cornerRadius: Int = 18
 ) {
     BoxWithConstraints(modifier = modifier) {
-        val isQr = card.format == BarcodeFormatType.QR_CODE
+        val isSquare = card.format == BarcodeFormatType.QR_CODE ||
+            card.format == BarcodeFormatType.DATA_MATRIX
         val shape = RoundedCornerShape(cornerRadius.dp)
         val widthPx = if (constraints.maxWidth != androidx.compose.ui.unit.Constraints.Infinity) constraints.maxWidth else 800
-        val heightPx = (widthPx * if (isQr) 1.05f else 0.42f).toInt()
+        val heightPx = (widthPx * if (isSquare) 1.05f else 0.42f).toInt()
         val bitmap = remember(card.id, card.number, card.format, widthPx, heightPx) {
             runCatching {
                 BarcodeEngine.generate(card.number, card.format, widthPx, heightPx)

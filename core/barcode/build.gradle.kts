@@ -20,4 +20,6 @@ dependencies {
     implementation(project(":core:model"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.zxing.core)
+
+    testImplementation(libs.junit)
 }
